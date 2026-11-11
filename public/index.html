@@ -9125,8 +9125,8 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
 
   // ------------------------------------------------------------------ the tape programme the game plays
   // kit: { end(tape), skip(show, fn), setFrame(top, footer), text(str), time(sec) } from the payload's S14Tape.
-  const CSS = `#tape.ahc-film{background:#050302}#tape.ahc-film #tape-image{opacity:1;object-fit:fill}#tape.ahc-film .tape-top{font-size:0}#tape.ahc-film .tape-top>span{display:none}#tape.ahc-film .tape-footer{visibility:hidden}#tape.ahc-film #tape-text{visibility:hidden}
-#tape.ahc-film.ahc-cap #tape-text{visibility:visible;word-break:keep-all;overflow-wrap:anywhere;line-break:strict;margin:auto auto max(18px,calc(env(safe-area-inset-bottom) + 10px));padding:5px 20px 6px;max-width:min(90vw,820px);background:#f6ead0;border:2px solid #2b1c17;border-radius:6px;box-shadow:2px 3px 0 rgba(43,28,23,.55);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;font-weight:700;font-size:clamp(15px,2.2vw,23px);line-height:1.5;letter-spacing:.04em;color:#2b1c17;text-shadow:none}
+  const CSS = `#tape.ahc-film{background:#050302}#tape.ahc-film #tape-image{opacity:1;object-fit:fill}#tape.ahc-film .tape-top{font-size:0}#tape.ahc-film .tape-top>span{display:none}#tape.ahc-film .tape-footer{display:none}#tape.ahc-film #tape-text{visibility:hidden}
+#tape.ahc-film.ahc-cap #tape-text{visibility:visible;word-break:keep-all;overflow-wrap:anywhere;line-break:strict;margin:auto auto max(12px,calc(env(safe-area-inset-bottom) + 6px));padding:5px 20px 6px;max-width:min(90vw,820px);background:#f6ead0;border:2px solid #2b1c17;border-radius:6px;box-shadow:2px 3px 0 rgba(43,28,23,.55);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;font-weight:700;font-size:clamp(15px,2.2vw,23px);line-height:1.5;letter-spacing:.04em;color:#2b1c17;text-shadow:none}
 #tape.ahc-film.ahc-cap #tape-text:empty{visibility:hidden}
 @media (max-width:600px){#tape.ahc-film.ahc-cap #tape-text{font-size:15px;padding:4px 12px 5px}}`;
   function makeProgram(kit) {
