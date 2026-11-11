@@ -1,0 +1,27 @@
+# main に push するたびに public/ を Cloudflare Pages (afterhour-458.pages.dev) へ公開します。
+# 必要な設定（GitHub の Settings → Secrets and variables → Actions）:
+#   Secrets:   CLOUDFLARE_API_TOKEN  … 「Cloudflare Pages: 編集」権限の API トークン
+#              CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
+#   Variables: CF_PAGES_PROJECT      … Pages のプロジェクト名（未設定なら afterhour）
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy public/ to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name=${{ vars.CF_PAGES_PROJECT || 'afterhour' }} --branch=main --commit-dirty=true
