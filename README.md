@@ -32,4 +32,4 @@ cd public && python3 -m http.server 8000
 # http://localhost:8000/
 ```
 
-デバッグ: `?armdebug` を付けるとオープニングの関節（肩・肘・手首と角度）を表示します。
+デバッグ: ブラウザのコンソールで `AHOpeningCartoon._debug.arms.on = true` にすると、オープニングの関節（肩・肘・手首と角度）を表示します（公開版では非表示）。

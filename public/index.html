@@ -7065,8 +7065,9 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
   // remembers how far the elbow is turned and turns it over smoothly (through depth) when a pose asks for the other
   // side. The outline is two bones joined by a rounded elbow, so the drawn arm is the solved arm.
   const ARM = { upper: 0.5, stretch: 1.18, minReach: 0.27, pole: [0.8, 0.6], round: 0.34 };
-  // ?armdebug draws the joints (shoulder blue, elbow red, wrist green, the bones, the elbow angle). Off in the film.
-  const ARMDBG = { on: (() => { try { return /[?&]armdebug\b/.test(location.search); } catch (_) { return false; } })(), log: null };
+  // joint view for development (shoulder blue, elbow red, wrist green, the bones, the elbow angle): switched off in
+  // the release; set ARMDBG.on = true from the console (window.AHOpeningCartoon._debug.arms) to see it again.
+  const ARMDBG = { on: false, log: null };
   // > 0: the elbow belongs on the +normal side of the shoulder->wrist line (normal = direction rotated +90deg)
   function elbowPref(sh, wr, side) { const dx = wr[0] - sh[0], dy = wr[1] - sh[1], d = Math.hypot(dx, dy) || 1e-6; return (-dy / d) * ARM.pole[0] * side + (dx / d) * ARM.pole[1]; }
   // How far round the elbow is turned (sim): c = +1 / -1 is the elbow seen side-on on either side of the
