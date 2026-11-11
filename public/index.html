@@ -9138,9 +9138,8 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
         if (!document.getElementById('ahc-style')) { const st = document.createElement('style'); st.id = 'ahc-style'; st.textContent = CSS; document.head.append(st); }
         const el = document.querySelector('#tape'); el.classList.add('ahc-film'); if (CONFIG.captions) el.classList.add('ahc-cap');
         kit.setFrame('', ''); kit.text('');
-        let seen = false;
-        try { seen = !!localStorage.getItem('after-hours-s18-cm'); localStorage.setItem('after-hours-s18-cm', '1'); } catch (_) {}
-        kit.skip(seen, () => { this.skipped = true; });
+        try { localStorage.setItem('after-hours-s18-cm', '1'); } catch (_) {}
+        kit.skip(true, () => { this.skipped = true; });   // SKIP is offered from the very first showing
         film = createFilm(tape.canvas); next = 0; lastFrame = -1; score = null; voices = []; played = new Set(); caption = ''; this.anchor = null; this.skipped = false;
         loadVoice();
         try { const a = tape.audio; if (a && a.ctx && a.master && a.ready) { score = makeScore(a.ctx, a.master); score.begin(a.ctx.currentTime); decodeVoice(a.ctx); } } catch (err) { console.warn('opening cartoon: no sound', err); score = null; }
