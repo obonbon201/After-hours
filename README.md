@@ -12,6 +12,7 @@
 | `public/index.html` | ゲーム本体（スクリプトはすべてこの1ファイルに入っています） |
 | `public/assets/` | 音声・アイコンなどの素材 |
 | `.github/workflows/deploy.yml` | `main` に push すると `public/` を Cloudflare Pages へ自動公開 |
+| `tools/entrance-district/` | ステージ1・入場ゲート先の拡張エリア（分岐広場／表通り／裏通路／合流地点）のソースと、index.html への埋め込みスクリプト |
 | `tools/opening-arm-fix/` | オープニングの腕（2ボーンIK）修正に使ったパッチスクリプト |
 
 ## 自動公開の設定（初回のみ）
