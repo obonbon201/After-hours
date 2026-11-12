@@ -1,7 +1,7 @@
 /* AFTER HOURS / Stage 1 — the area behind the entrance gate (v1.9.6).
  *
  * The walkable ground behind the gate is doubled (about 635 m2 -> about 1270 m2, counted on a 0.25 m grid):
- *  - BRANCH SQUARE  just inside the gate: a signpost with a warm lantern shows the two ways on.
+ *  - BRANCH SQUARE  just inside the gate: the main street ahead, the service-yard gate to the right.
  *  - MAIN STREET    the existing avenue to the carousel: a closed snack stand with a striped awning, a shut
  *                   popcorn cart, two dying lamps, hedges, an old guide board, and bulbs on the far banner.
  *  - BACK ALLEY     through a delivery gate in the east fence: a service yard with a parked truck, then two
@@ -561,19 +561,6 @@
     const cone = (x, z) => { cyl(0.04, 0.6, x, 0.32, z, M.cone, 10, null, statics, 0.17); block(x - 0.2, x + 0.2, z - 0.2, z + 0.2, 0, 0.04, M.black); collide(x - 0.22, x + 0.22, z - 0.22, z + 0.22, 'cone'); };
     cone(24.0, 24.9); cone(31.9, 24.9); cone(31.9, 28.9); cone(17.4, 21.0);
 
-    // ------------------------------------------------------------------ BRANCH SQUARE: signpost with a lantern
-    {
-      const x = 7.4, z = 28.0;
-      cyl(0.065, 3.15, x, 1.575, z, M.black, 10); cyl(0.2, 0.12, x, 0.06, z, M.concrete, 12);
-      // both boards face the gate; their backs are plain
-      sign('north', 1.35, 0.3, x, 2.45, z + 0.045, 0); block(x - 0.69, x + 0.69, z - 0.02, z + 0.035, 2.29, 2.61, M.black);
-      sign('east', 1.35, 0.3, x + 0.5, 2.02, z + 0.045, 0); block(x - 0.19, x + 1.19, z - 0.02, z + 0.035, 1.86, 2.18, M.black);
-      box(0.22, 0.3, 0.22, x, 3.28, z, M.black); cyl(0.13, 0.04, x, 3.45, z, M.black, 8);
-      box(0.15, 0.22, 0.15, x, 3.28, z, M.lantern, null, live);
-      collide(x - 0.2, x + 0.2, z - 0.2, z + 0.2, 'branch-post');
-      glowPool(5.5, 5.5, x, z, '#ffcf8a', 0.14); halo(1.4, x, 3.28, z, '#ffcf8a', 0.32);
-    }
-
     // ------------------------------------------------------------------ MAIN STREET dressing
     // the popcorn cart, shut
     {
@@ -750,7 +737,7 @@
     requestAnimationFrame(frame);
 
     const api = {
-      bounds: D, colliders, yardGate: YARD_GATE, sideGate: SIDE_GATE, placeOf,
+      bounds: D, colliders, yardGate: YARD_GATE, sideGate: SIDE_GATE, placeOf, T,
       get oldFenceRemoved() { return oldFenceGone; },
       update: (dt) => update(dt),
     };
