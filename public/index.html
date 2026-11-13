@@ -7844,7 +7844,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
   const OPEN_ANGLE = 1.52;                       // leaf flat against the inner south wall
   const CLOSED = { minX: -10.175, maxX: -9.825, minZ: 20.95, maxZ: 22.25 };
   const OPEN = { minX: -11.36, maxX: -10.02, minZ: 22.1, maxZ: 22.27 };
-  const SWING = 0.7;                             // seconds
+  const OPEN_SWING = 1.1, CLOSE_SWING = 0.7;     // seconds (the opening matches the recording's stop at ~1.1 s)
 
   function install(host) {
     const world = host.world, story = host.story, player = host.player;
@@ -7852,7 +7852,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const col = world.colliders.find((c) => c.kind === 'door-leaf' && Math.abs(c.minX + 11.34) < 0.05 && Math.abs(c.minZ - 21.96) < 0.05);
     if (!col || !col.mesh) return;
     const leaf = col.mesh;
-    const door = { open: false, angle: 0, from: 0, to: 0, t: 1, pending: null };
+    const door = { open: false, angle: 0, from: 0, to: 0, t: 1, pending: null, dur: OPEN_SWING };
     world.maintenanceDoor = door;
     const setBox = (b) => { col.minX = b.minX; col.maxX = b.maxX; col.minZ = b.minZ; col.maxZ = b.maxZ; col.disabled = false; world.collisionRevision = (world.collisionRevision | 0) + 1; };
     const overlaps = (b) => {
@@ -7866,38 +7866,50 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const target = world.target('maint-door', 'メンテナンス室の扉を開ける', -10, 1.2, 21.6);
     const say = (text, sec) => host.ui && host.ui.subtitle && host.ui.subtitle(text, sec);
 
-    // --- sound: synthesized handle click + hinge creak, routed through the game's master gain
+    // --- sound: the supplied door recordings (open: latch, creak and the stop at ~1.1 s; close: the slam peaks at
+    // 0.15 s, so it is started early enough to land as the leaf meets the frame); synthesized clicks as a fallback
+    const FILES = { open: './assets/audio/sfx/door-open.mp3', close: './assets/audio/sfx/door-close.mp3' };
+    const bytes = {}, buffers = {};
+    const decode = () => {
+      const a = host.audio; if (!a || !a.ctx) return;
+      for (const k of Object.keys(bytes)) {
+        if (buffers[k] || !bytes[k]) continue;
+        const b = bytes[k]; bytes[k] = null;
+        a.ctx.decodeAudioData(b, (buf) => { buffers[k] = buf; }, () => {});
+      }
+    };
+    for (const [k, url] of Object.entries(FILES)) fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { if (b) { bytes[k] = b; decode(); } }).catch(() => {});
     const sound = (opening) => {
       const a = host.audio;
       if (!a || !a.ctx || !a.master || a.ctx.state === 'closed') return;
+      decode();
       const c = a.ctx, now = c.currentTime;
-      const cam = host.camera, dx = -10 - cam.position.x, dz = 21.6 - cam.position.z, d = Math.hypot(dx, dz);
-      const out = c.createGain(); out.gain.value = 0.9 / (1 + d / 4); out.connect(a.master);
+      const cam = host.camera, d = Math.hypot(-10 - cam.position.x, 21.6 - cam.position.z);
+      const out = c.createGain(); out.gain.value = 1.0 / (1 + d / 4); out.connect(a.master);
+      const buf = buffers[opening ? 'open' : 'close'];
+      if (buf) {
+        const src = c.createBufferSource(); src.buffer = buf; src.connect(out);
+        src.start(opening ? now : now + Math.max(0, CLOSE_SWING - 0.15));
+        return;
+      }
       const click = (t, f, g) => {
         const o = c.createOscillator(), e = c.createGain();
         o.type = 'square'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.4, t + 0.05);
         e.gain.setValueAtTime(g, t); e.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
         o.connect(e).connect(out); o.start(t); o.stop(t + 0.07);
       };
-      const creak = (t, f0, f1, dur, g) => {
-        const o = c.createOscillator(), e = c.createGain(), bp = c.createBiquadFilter();
-        o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur);
-        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 6;
-        e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(g, t + 0.06); e.gain.linearRampToValueAtTime(g * 0.6, t + dur * 0.7); e.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        o.connect(bp).connect(e).connect(out); o.start(t); o.stop(t + dur + 0.02);
-      };
-      if (opening) { click(now, 1800, 0.05); creak(now + 0.05, 210, 160, 0.55, 0.045); }
-      else { creak(now, 170, 220, 0.45, 0.035); click(now + SWING - 0.05, 900, 0.09); click(now + SWING, 260, 0.12); }
+      if (opening) click(now, 1800, 0.05);
+      else { click(now + CLOSE_SWING - 0.05, 900, 0.09); click(now + CLOSE_SWING, 260, 0.12); }
     };
 
     const toggle = () => {
       if (door.t < 1) return;
       if (door.open) {
         if (overlaps(CLOSED)) { say('扉の前から少し離れてください。', 2); return; }
-        door.open = false; door.from = door.angle; door.to = 0; door.t = 0;
+        door.open = false; door.from = door.angle; door.to = 0; door.t = 0; door.dur = CLOSE_SWING;
         setBox(CLOSED); door.pending = null;
       } else {
-        door.open = true; door.from = door.angle; door.to = OPEN_ANGLE; door.t = 0;
+        door.open = true; door.from = door.angle; door.to = OPEN_ANGLE; door.t = 0; door.dur = OPEN_SWING;
         // the doorway is free at once; the leaf's own box waits until the player is clear of it
         if (overlaps(OPEN)) { col.disabled = true; world.collisionRevision = (world.collisionRevision | 0) + 1; door.pending = OPEN; }
         else setBox(OPEN);
@@ -7920,12 +7932,13 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const tick = (now) => {
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
       if (door.t < 1) {
-        door.t = Math.min(1, door.t + dt / SWING);
+        door.t = Math.min(1, door.t + dt / door.dur);
         const e = door.t < 0.5 ? 2 * door.t * door.t : 1 - Math.pow(-2 * door.t + 2, 2) / 2;
         door.angle = door.from + (door.to - door.from) * e;
         leaf.rotation.y = door.angle;
       }
       if (door.pending && !overlaps(door.pending)) { setBox(door.pending); door.pending = null; }
+      if ((!buffers.open || !buffers.close) && (now | 0) % 1000 < 20) decode();   // the audio context may start after load
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
