@@ -251,7 +251,8 @@
       stripes: std({ map: tex(stripeCanvas), alphaTest: 0.5, side: T.DoubleSide, roughness: 0.95, metalness: 0 }),
       leaf: std({ map: repeatTex(leafCanvas, 2, 2), roughness: 1, metalness: 0, envMapIntensity: 0.05 }),
       tyre: std({ color: '#1d2220', roughness: 0.95 }),
-      atlas: std({ map: atlasTex, roughness: 0.95, metalness: 0, envMapIntensity: 0.12, side: T.DoubleSide }),
+      // printed boards at half albedo so they do not wash out in the torch beam (see print-dimmer.js)
+      atlas: std({ map: atlasTex, color: 0x808080, roughness: 0.95, metalness: 0, envMapIntensity: 0.12, side: T.DoubleSide }),
       exit: new T.MeshBasicMaterial({ map: tex(exitCanvas), toneMapped: false }),
       junction: std({ map: tex(junctionCanvas), emissiveMap: tex(junctionCanvas), emissive: new T.Color('#fff1d0'), emissiveIntensity: 0.55, roughness: 0.9 }),
       // light bodies (unlit; their brightness is animated)
@@ -293,6 +294,7 @@
     const plane = (w, h, x, y, z, mat, ry = 0, rx = 0, parent = statics) => {
       const m = new T.Mesh(new T.PlaneGeometry(w, h), mat); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); parent.add(m); return m;
     };
+    M.atlas.userData.noDim = true;   // already at half albedo
     // a board from the atlas; ry turns it (0 = faces +z)
     const sign = (key, w, h, x, y, z, ry = 0, parent = statics) => {
       const m = plane(w, h, x, y, z, M.atlas, ry, 0, parent), [u0, v0, du, dv] = atlasRects.get(key), uv = m.geometry.attributes.uv;
