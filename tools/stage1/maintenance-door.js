@@ -34,7 +34,11 @@
     leaf.rotation.y = 0;
     setBox(CLOSED);
 
-    const target = world.target('maint-door', 'メンテナンス室の扉を開ける', -10, 1.2, 21.6);
+    const target = world.target('maint-door', 'メンテナンス室の扉を開ける', -10.08, 1.2, 21.59);
+    // the interaction point rides on the middle of the leaf, so the door itself is what you use, open or closed
+    const mid = new (target.position.constructor)();
+    const placeTarget = () => { leaf.updateMatrixWorld(true); mid.set(0, 1.2, -0.63); leaf.localToWorld(mid); target.position.copy(mid); };
+    placeTarget();
     const say = (text, sec) => host.ui && host.ui.subtitle && host.ui.subtitle(text, sec);
 
     // --- sound: the supplied door recordings (open: latch, creak and the stop at ~1.1 s; close: the slam peaks at
@@ -55,7 +59,7 @@
       if (!a || !a.ctx || !a.master || a.ctx.state === 'closed') return;
       decode();
       const c = a.ctx, now = c.currentTime;
-      const cam = host.camera, d = Math.hypot(-10 - cam.position.x, 21.6 - cam.position.z);
+      const cam = host.camera, d = Math.hypot(target.position.x - cam.position.x, target.position.z - cam.position.z);
       const out = c.createGain(); out.gain.value = 1.0 / (1 + d / 4); out.connect(a.master);
       const buf = buffers[opening ? 'open' : 'close'];
       if (buf) {
@@ -107,6 +111,7 @@
         const e = door.t < 0.5 ? 2 * door.t * door.t : 1 - Math.pow(-2 * door.t + 2, 2) / 2;
         door.angle = door.from + (door.to - door.from) * e;
         leaf.rotation.y = door.angle;
+        placeTarget();
       }
       if (door.pending && !overlaps(door.pending)) { setBox(door.pending); door.pending = null; }
       if ((!buffers.open || !buffers.close) && (now | 0) % 1000 < 20) decode();   // the audio context may start after load
