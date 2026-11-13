@@ -91,10 +91,16 @@
     for (const y of [0.09, 0.44]) nb(0.58, 0.05, 0.58, M.woodDark, 0, y, 0);
     noteCrate.position.set(-15.42, 0, 16.62); noteCrate.rotation.y = -0.12; root.add(noteCrate);
     addCollider(-15.72, -15.12, 16.32, 16.92, 'crate');
-    // the note: a plain white sheet with a hurried scrawl, a little bright so it reads in the dark
+    // the note: a grubby white sheet with a hurried scrawl, a little bright so it reads in the dark
     const nc = document.createElement('canvas'); nc.width = 256; nc.height = 352;
     const nx = nc.getContext('2d');
-    nx.fillStyle = '#fbfaf6'; nx.fillRect(0, 0, 256, 352);
+    nx.fillStyle = '#f1ede2'; nx.fillRect(0, 0, 256, 352);
+    // grime: speckles, a couple of brown blotches, a crease and darker, handled edges
+    let gs = 3; const gr = () => ((gs = (gs * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 900; i++) { nx.fillStyle = `rgba(${90 + gr() * 40 | 0},${70 + gr() * 30 | 0},${40 + gr() * 20 | 0},${0.05 + gr() * 0.12})`; nx.fillRect(gr() * 256, gr() * 352, 1 + gr() * 2, 1 + gr() * 2); }
+    for (const [x, y, r, a] of [[60, 50, 70, 0.14], [210, 150, 55, 0.1], [120, 300, 80, 0.12]]) { const g = nx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(140,105,55,${a})`); g.addColorStop(1, 'rgba(140,105,55,0)'); nx.fillStyle = g; nx.fillRect(0, 0, 256, 352); }
+    nx.strokeStyle = 'rgba(70,55,35,.12)'; nx.lineWidth = 1.5; nx.beginPath(); nx.moveTo(0, 176); nx.lineTo(256, 172); nx.stroke();
+    const edge = nx.createRadialGradient(128, 176, 120, 128, 176, 230); edge.addColorStop(0, 'rgba(100,80,50,0)'); edge.addColorStop(1, 'rgba(100,80,50,.35)'); nx.fillStyle = edge; nx.fillRect(0, 0, 256, 352);
     nx.strokeStyle = '#2b2b33'; nx.lineWidth = 2.2; nx.lineCap = 'round';
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let row = 0; row < 9; row++) {      // scribbled lines of handwriting

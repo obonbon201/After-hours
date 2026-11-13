@@ -8044,10 +8044,16 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     for (const y of [0.09, 0.44]) nb(0.58, 0.05, 0.58, M.woodDark, 0, y, 0);
     noteCrate.position.set(-15.42, 0, 16.62); noteCrate.rotation.y = -0.12; root.add(noteCrate);
     addCollider(-15.72, -15.12, 16.32, 16.92, 'crate');
-    // the note: a plain white sheet with a hurried scrawl, a little bright so it reads in the dark
+    // the note: a grubby white sheet with a hurried scrawl, a little bright so it reads in the dark
     const nc = document.createElement('canvas'); nc.width = 256; nc.height = 352;
     const nx = nc.getContext('2d');
-    nx.fillStyle = '#fbfaf6'; nx.fillRect(0, 0, 256, 352);
+    nx.fillStyle = '#f1ede2'; nx.fillRect(0, 0, 256, 352);
+    // grime: speckles, a couple of brown blotches, a crease and darker, handled edges
+    let gs = 3; const gr = () => ((gs = (gs * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 900; i++) { nx.fillStyle = `rgba(${90 + gr() * 40 | 0},${70 + gr() * 30 | 0},${40 + gr() * 20 | 0},${0.05 + gr() * 0.12})`; nx.fillRect(gr() * 256, gr() * 352, 1 + gr() * 2, 1 + gr() * 2); }
+    for (const [x, y, r, a] of [[60, 50, 70, 0.14], [210, 150, 55, 0.1], [120, 300, 80, 0.12]]) { const g = nx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(140,105,55,${a})`); g.addColorStop(1, 'rgba(140,105,55,0)'); nx.fillStyle = g; nx.fillRect(0, 0, 256, 352); }
+    nx.strokeStyle = 'rgba(70,55,35,.12)'; nx.lineWidth = 1.5; nx.beginPath(); nx.moveTo(0, 176); nx.lineTo(256, 172); nx.stroke();
+    const edge = nx.createRadialGradient(128, 176, 120, 128, 176, 230); edge.addColorStop(0, 'rgba(100,80,50,0)'); edge.addColorStop(1, 'rgba(100,80,50,.35)'); nx.fillStyle = edge; nx.fillRect(0, 0, 256, 352);
     nx.strokeStyle = '#2b2b33'; nx.lineWidth = 2.2; nx.lineCap = 'round';
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let row = 0; row < 9; row++) {      // scribbled lines of handwriting
@@ -10703,12 +10709,20 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       #objective{display:none !important}
       /* a note read in the dialog looks like the sheet of paper itself (plain white) */
       #dialog.ah-paper{background:#05090bcc}
-      #dialog.ah-paper .panel{position:relative;width:min(430px,92vw);border:0;padding:22px 28px 16px;color:#2a2722;border-radius:2px;transform:rotate(-1.2deg);
-        background:#fbfaf6;box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.06) inset}
-      #dialog.ah-paper #dialog-label{color:#8a7d62;letter-spacing:.24em;border:0;margin:0 0 2px}
-      #dialog.ah-paper #dialog-title{color:#3a3328;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-size:15px;letter-spacing:.08em;margin:0 0 6px;border:0}
-      #dialog.ah-paper #dialog-body{color:#24211c;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-weight:600;font-size:16px;line-height:30px;text-shadow:none;letter-spacing:.03em}
-      #dialog.ah-paper #dialog-close{margin-top:14px;background:transparent;color:#4a4236;border:1px solid #4a423666}
+      #dialog.ah-paper .panel{position:relative;box-sizing:border-box;height:min(88vh,460px);width:auto;aspect-ratio:210/297;max-width:92vw;border:0;padding:20px 22px 14px;color:#2a2722;border-radius:1px;transform:rotate(-1.4deg);overflow:auto;
+        background:
+          linear-gradient(180deg,transparent 49.4%,rgba(60,45,25,.10) 49.9%,rgba(255,255,255,.45) 50.3%,transparent 50.9%),
+          linear-gradient(90deg,transparent 63%,rgba(60,45,25,.07) 63.4%,rgba(255,255,255,.3) 63.7%,transparent 64.2%),
+          radial-gradient(circle at 74% 82%,transparent 25px,rgba(120,85,40,.26) 27px,rgba(120,85,40,.12) 30px,transparent 33px),
+          radial-gradient(ellipse 60% 40% at 18% 12%,rgba(150,115,60,.18),transparent 70%),
+          radial-gradient(ellipse 45% 30% at 90% 40%,rgba(110,90,60,.14),transparent 70%),
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .32 0 0 0 0 .26 0 0 0 0 .17 1.1 0 0 0 -.38'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>"), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='600'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='.011' numOctaves='4' seed='7'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .34 0 0 0 0 .18 2.1 0 0 0 -1.05'/></filter><rect width='100%25' height='100%25' filter='url(%23b)'/></svg>"),
+          linear-gradient(172deg,#f4f1e8,#ebe5d6 75%,#e2d9c4);
+        box-shadow:0 18px 40px rgba(0,0,0,.65),inset 0 0 26px rgba(110,85,50,.38),inset 0 0 3px rgba(80,60,30,.35)}
+      #dialog.ah-paper #dialog-label{color:#8a7d62;letter-spacing:.24em;border:0;margin:0 0 2px;font-size:10px}
+      #dialog.ah-paper #dialog-title{color:#3a3328;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-size:14px;letter-spacing:.08em;margin:0 0 8px;border:0}
+      #dialog.ah-paper #dialog-body{color:#24211c;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-weight:600;font-size:14px;line-height:23px;text-shadow:none;letter-spacing:.02em}
+      #dialog.ah-paper #dialog-close{margin-top:12px;padding:8px 12px;font-size:11px;background:transparent;color:#4a4236;border:1px solid #4a423666}
       /* subtitles fade out instead of vanishing */
       #hud #subtitle,#stage2-subtitles{transition:opacity .85s ease !important}
       #hud #subtitle.ah-out,#stage2-subtitles.ah-out{opacity:0 !important}
