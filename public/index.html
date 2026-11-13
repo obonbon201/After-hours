@@ -10400,6 +10400,8 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       #hud #subtitle{white-space:pre-line}
       @media (max-height:500px){#hud #subtitle{left:29%;right:29%}#stage2-subtitles{width:min(380px,42vw) !important}}
       /* every subtitle in Mincho: in-play (stage 1 / stage 2) and the opening captions */
+      /* the objective block under the place name (top left) is not shown */
+      #objective{display:none !important}
       /* subtitles fade out instead of vanishing */
       #hud #subtitle,#stage2-subtitles{transition:opacity .85s ease !important}
       #hud #subtitle.ah-out,#stage2-subtitles.ah-out{opacity:0 !important}
