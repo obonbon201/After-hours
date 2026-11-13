@@ -5,7 +5,7 @@
    steady even while the game is busy starting up behind the card. */
 (() => {
   const AH2 = (window.AH2 = window.AH2 || {});
-  const FIRST = 0.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.2;
+  const FIRST = 0.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 2.0;
   const OUT_AT = FIRST + GAP + FADE_IN + HOLD;   // 3 s after "10月31日" is fully shown
   AH2.dateCard = function (done) {
     let finished = false;
