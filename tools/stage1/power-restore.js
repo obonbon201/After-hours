@@ -182,6 +182,8 @@
     // ---------------------------------------------------------------- state
     const picked = () => (story.fuses || []).filter((f) => f === 'fuse-yard' || f === 'fuse-bench').length;
     const installed = () => (story.fuses || []).includes('box') || story.stage >= 2;
+    const inserted = () => (story.fuses || []).filter((f) => f === 'in:fuse-yard' || f === 'in:fuse-bench').length;
+    const carried = () => (story.fuses || []).filter((f) => (f === 'fuse-yard' || f === 'fuse-bench') && !(story.fuses || []).includes('in:' + f));
     const s14 = () => story.ah14 && story.ah14.story;
     let leverAnim = null, pulling = false;
     const say = (t, d) => host.ui && host.ui.subtitle && host.ui.subtitle(t, d);
@@ -207,9 +209,9 @@
         p.mesh.visible = !have;
         if (have || story.stage !== 1) removeTarget(p.target); else addTarget(p.target);
       }
-      const ins = installed();
-      for (const m of inBox) m.visible = ins;
-      boxTarget.label = ins ? 'ヒューズボックス' : picked() >= NEED ? 'ヒューズを入れる' : 'ヒューズボックス';
+      const ins = installed(), nIn = ins ? NEED : inserted();
+      inBox.forEach((m, i) => { m.visible = i < nIn; });
+      boxTarget.label = !ins && carried().length ? 'ヒューズを入れる' : 'ヒューズボックス';
       leverTarget.label = story.stage >= 2 ? '配電レバー' : '配電レバーを引く';
       if (!leverAnim && !pulling) arm.rotation.z = story.stage >= 2 ? DOWN : UP;
     };
@@ -222,7 +224,7 @@
         story.fuses.push(id);
         tone(320, 0.1); setTimeout(() => tone(480, 0.08), 90);
         const n = picked();
-        say(n >= NEED ? `ヒューズを手に入れた。 ${n} / ${NEED}　メンテナンス室のヒューズボックスへ。` : `ヒューズを手に入れた。 ${n} / ${NEED}`, 3.5);
+        say(`ヒューズを手に入れた。 ${n} / ${NEED}　メンテナンス室のヒューズボックスへ。`, 3.5);
         sync(); story.save && story.save(); story.objective && story.objective();
         return;
       }
@@ -241,18 +243,21 @@
       }
       if (id === 'fuse-box') {
         if (installed()) { say('ヒューズは2本とも差し込んである。', 2.5); return; }
-        const n = picked();
-        if (n < NEED) { say(`ヒューズが足りない。 ${n} / ${NEED}`, 2.5); return; }
-        story.fuses.push('box');
-        // one click per fuse
-        if (!(playInsert(0) && playInsert(0.62))) { tone(260, 0.07); setTimeout(() => tone(200, 0.09), 160); setTimeout(() => tone(260, 0.07), 420); setTimeout(() => tone(200, 0.09), 580); }
-        say('ヒューズを2本、差し込んだ。横の配電レバーを引けば、電源が戻るはずだ。', 4.5);
+        const hand = carried();
+        if (!hand.length) { say(inserted() ? `ヒューズを持っていない。 差し込み済み ${inserted()} / ${NEED}` : 'ヒューズを持っていない。', 2.5); return; }
+        // whatever is in hand goes in, one click per fuse
+        hand.forEach((f, i) => { story.fuses.push('in:' + f); if (!playInsert(i * 0.62)) setTimeout(() => { tone(260, 0.07); setTimeout(() => tone(200, 0.09), 160); }, i * 620); });
+        const n = inserted();
+        if (n >= NEED) {
+          story.fuses.push('box');
+          say('ヒューズを2本、差し込んだ。横の配電レバーを引けば、電源が戻るはずだ。', 4.5);
+        } else say(`ヒューズを差し込んだ。 ${n} / ${NEED}　あと${NEED - n}本。`, 3.5);
         sync(); story.save && story.save(); story.objective && story.objective();
         return;
       }
       if (id === 'power-lever') {
         if (story.stage >= 2) { say('電源は戻っている。', 2); return; }
-        if (!installed()) { say('ヒューズボックスが空だ。先にヒューズを入れる。', 3); return; }
+        if (!installed()) { say(inserted() ? `ヒューズが足りない。 ${inserted()} / ${NEED}` : 'ヒューズボックスが空だ。先にヒューズを入れる。', 3); return; }
         if (pulling) return;
         pulling = true;
         leverAnim = { t: 0, from: arm.rotation.z, to: DOWN, dur: 0.45 };
