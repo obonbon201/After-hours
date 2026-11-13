@@ -111,12 +111,48 @@
     note.rotation.set(-Math.PI / 2, 0, 0.35); note.position.set(-15.42, 0.527, 16.62); root.add(note);
     const noteTarget = world.target('fuse-note', 'メモを読む', -15.42, 0.55, 16.62);
 
-    // ---------------------------------------------------------------- the distribution lever beside it
-    const lever = new T.Group(); lever.position.set(LEVER.x, LEVER.y, LEVER.z); root.add(lever);
-    const lp = (w, h, d, mat, x, y, z, parent = lever) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
-    lp(0.06, 0.62, 0.34, M.steel, -0.06, 0, 0);                   // back plate on the wall
-    lp(0.08, 0.5, 0.06, M.dark, -0.01, 0, -0.12); lp(0.08, 0.5, 0.06, M.dark, -0.01, 0, 0.12);   // guide cheeks
-    // printed plate above
+    // ---------------------------------------------------------------- the distribution lever: a wall-mounted knife switch
+    // (orange-red moulded housing with an arched cover in three ribs and a warning band, a green base, and a green
+    // T-shaped handle that swings over the arch: up = off, down = on). Local +x points out of the wall.
+    const WALL_X = -15.825;
+    const lever = new T.Group(); lever.position.set(WALL_X, LEVER.y, LEVER.z); root.add(lever);
+    const KS = {
+      body: std({ color: 0xe0502c, roughness: 0.48, metalness: 0 }),
+      base: std({ color: 0x1f9c72, roughness: 0.5, metalness: 0 }),
+      slot: std({ color: 0x1a1412, roughness: 0.8, metalness: 0 }),
+      blue: std({ color: 0x2f6f9a, roughness: 0.4, metalness: 0.2 }),
+    };
+    const kb = (w, h, d, mat, x, y, z, parent = lever) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
+    const hole = (x, y, z, r = 0.014) => { const m = new T.Mesh(new T.CylinderGeometry(r, r, 0.012, 12), KS.slot); m.rotation.z = Math.PI / 2; m.position.set(x, y, z); lever.add(m); };
+    // green base on the wall, and the orange blocks with screw holes above and below the arch
+    kb(0.05, 0.5, 0.34, KS.base, 0.025, 0, 0);
+    kb(0.07, 0.13, 0.3, KS.body, 0.085, -0.17, 0); kb(0.07, 0.13, 0.3, KS.body, 0.085, 0.17, 0);
+    for (const z of [-0.09, 0, 0.09]) { hole(0.121, -0.17, z); }
+    for (const z of [-0.09, 0.09]) { hole(0.121, 0.17, z); }
+    // the arched cover: three ribs (half cylinders on a horizontal axis along the wall) with dark gaps between
+    const AX = 0.12, R = 0.15, RIB = 0.072, GAP = 0.012;
+    const half = (r, len) => { const g = new T.CylinderGeometry(r, r, len, 28, 1, false, 0, Math.PI); g.rotateX(Math.PI / 2); return g; };   // axis along the wall, the half facing +x (out of the wall)
+    for (const i of [-1, 0, 1]) { const m = new T.Mesh(half(R, RIB), KS.body); m.position.set(AX, 0, i * (RIB + GAP)); lever.add(m); }
+    const gapCore = new T.Mesh(half(R - 0.025, (RIB + GAP) * 3), KS.slot); gapCore.position.set(AX, 0, 0); lever.add(gapCore);
+    // white warning band with red print over the middle rib
+    const wc = document.createElement('canvas'); wc.width = 512; wc.height = 96;
+    const w2 = wc.getContext('2d');
+    w2.fillStyle = '#f4f1ea'; w2.fillRect(0, 0, 512, 96); w2.strokeStyle = '#c8301e'; w2.lineWidth = 3; w2.strokeRect(4, 6, 504, 84);
+    w2.fillStyle = '#c8301e'; w2.font = 'bold 22px serif'; w2.textAlign = 'left';
+    w2.fillText('Important Warning:', 26, 34); w2.font = '16px serif'; w2.fillText('Do not open the cover when connecting.', 26, 58); w2.fillText('通電中は カバーを開けないこと', 26, 80);
+    w2.beginPath(); w2.moveTo(460, 30); w2.lineTo(460, 62); w2.lineTo(450, 52); w2.moveTo(460, 62); w2.lineTo(470, 52); w2.lineWidth = 4; w2.stroke();
+    const wtex = new T.CanvasTexture(wc); wtex.colorSpace = T.SRGBColorSpace || wtex.colorSpace;
+    const band = new T.Mesh(half(R + 0.002, RIB * 0.82), std({ map: wtex, roughness: 0.6, metalness: 0 })); band.position.set(AX, 0, 0); lever.add(band);
+    // round inspection sticker on the end of the arch
+    const sc = document.createElement('canvas'); sc.width = 128; sc.height = 128;
+    const s2 = sc.getContext('2d');
+    s2.fillStyle = '#f6f2e8'; s2.beginPath(); s2.arc(64, 64, 62, 0, Math.PI * 2); s2.fill();
+    s2.strokeStyle = '#e07a20'; s2.lineWidth = 9; s2.beginPath(); s2.ellipse(64, 64, 46, 30, -0.5, 0, Math.PI * 2); s2.stroke();
+    s2.fillStyle = '#e07a20'; s2.font = 'bold 15px sans-serif'; s2.textAlign = 'center'; s2.save(); s2.translate(64, 64); s2.rotate(-0.5); s2.fillText('QUALIFIED', 0, 5); s2.restore();
+    const stex = new T.CanvasTexture(sc); stex.colorSpace = T.SRGBColorSpace || stex.colorSpace;
+    const sticker = new T.Mesh(new T.CircleGeometry(0.045, 24), std({ map: stex, roughness: 0.6, metalness: 0 }));
+    sticker.position.set(AX + 0.07, 0.03, 1.5 * RIB + GAP + 0.001); lever.add(sticker);
+    // printed plate above the switch
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96;
     const c2 = cv.getContext('2d');
     c2.fillStyle = '#ddd6bf'; c2.fillRect(0, 0, 256, 96); c2.strokeStyle = '#2a2a2a'; c2.lineWidth = 6; c2.strokeRect(5, 5, 246, 86);
@@ -124,16 +160,20 @@
     c2.font = 'bold 20px sans-serif'; c2.fillStyle = '#b01e14'; c2.fillText('MAIN POWER  ↓ ON', 128, 78);
     const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
     const plate = new T.Mesh(new T.PlaneGeometry(0.34, 0.13), std({ map: tex, roughness: 0.85, metalness: 0 }));
-    plate.position.set(-0.025, 0.42, 0); plate.rotation.y = Math.PI / 2; lever.add(plate);
-    // the handle swings on a pivot across the wall: up = off, down = on
-    const arm = new T.Group(); arm.position.set(0.02, 0, 0); lever.add(arm);
-    lp(0.035, 0.3, 0.035, M.steel, 0, 0.15, 0, arm);
-    const knob = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.16, 12), M.red); knob.rotation.x = Math.PI / 2; knob.position.set(0, 0.31, 0); arm.add(knob);
-    const pivot = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.2, 12), M.dark); pivot.rotation.x = Math.PI / 2; lever.add(pivot);
-    const UP = -0.4, DOWN = -Math.PI + 0.4;
+    plate.position.set(0.004, 0.36, 0); plate.rotation.y = Math.PI / 2; lever.add(plate);
+    // the green T-handle: a cross bar outside the arch, carried by two side arms on the arch's axis
+    const arm = new T.Group(); arm.position.set(AX, 0, 0); lever.add(arm);
+    const HR = R + 0.05, HALFW = 1.5 * RIB + GAP + 0.018;
+    kb(0.05, 0.045, HALFW * 2 + 0.03, KS.base, HR, 0, 0, arm);                 // cross bar
+    kb(0.07, 0.03, 0.09, KS.base, HR + 0.05, 0, 0, arm);                       // the grip
+    for (const zs of [-1, 1]) {
+      kb(HR, 0.03, 0.014, KS.base, HR / 2, 0, zs * HALFW, arm);                // side arm
+      const d = new T.Mesh(new T.CylinderGeometry(0.011, 0.011, 0.012, 10), KS.blue); d.rotation.z = Math.PI / 2; d.position.set(HR + 0.026, 0, zs * (HALFW - 0.005)); arm.add(d);
+    }
+    const UP = 0.95, DOWN = -0.95;
     arm.rotation.z = UP;
-    addCollider(LEVER.x - 0.1, LEVER.x + 0.2, LEVER.z - 0.2, LEVER.z + 0.2, 'lever');
-    const leverTarget = world.target('power-lever', '配電レバーを引く', LEVER.x + 0.14, LEVER.y, LEVER.z);
+    addCollider(WALL_X - 0.02, WALL_X + 0.36, LEVER.z - 0.2, LEVER.z + 0.2, 'lever');
+    const leverTarget = world.target('power-lever', '配電レバーを引く', WALL_X + 0.28, LEVER.y, LEVER.z);
     world.collisionRevision = (world.collisionRevision | 0) + 1;
 
     // ---------------------------------------------------------------- state
