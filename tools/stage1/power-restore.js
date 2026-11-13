@@ -1,7 +1,7 @@
 
 /* Stage 1 power restore (replaces the three fuse boxes and the carousel recovery panel):
  *  - two spare fuses lie in the park: on a crate in the corner of the service-yard car park just inside the
- *    loading gate, and on a bench;
+ *    loading gate, and on the bench behind the carousel; a note on a crate by the fuse box says where to look;
  *  - both go into the fuse box in the maintenance room;
  *  - the power comes back only when the distribution lever beside the fuse box is pulled (the old turning point:
  *    the carousel starts, the park wakes up and the night goes on as before).
@@ -19,7 +19,7 @@
   const PICKUPS = [
     // id, position of the fuse, its turn on the surface
     { id: 'fuse-yard', x: 11.33, y: 0.535, z: 39.43, ry: 0.6 },     // on a crate, corner of the car park by the loading gate
-    { id: 'fuse-bench', x: 6.35, y: 0.607, z: 9.98, ry: -0.25 },    // on the seat of the main-street bench
+    { id: 'fuse-bench', x: 3.3, y: 0.607, z: -26.48, ry: -0.25 },   // on the seat of the bench behind the carousel
   ];
   const BOX = { x: -15.45, y: 1.4, z: 19 };                          // maintenance room fuse box (west wall)
   const LEVER = { x: -15.74, y: 1.42, z: 17.98 };                    // distribution lever, just left of the box
@@ -83,6 +83,34 @@
     }
     const boxTarget = world.target('fuse-box', 'ヒューズボックス', BOX.x, BOX.y, BOX.z);
 
+    // ---------------------------------------------------------------- a crate by the fuse box with a scribbled note on it
+    const NOTE = '誰かが夜中にヒューズを抜いてやがる、くだらねーイタズラだぜ。\n　いつも搬入口の駐車場とカルーセルの近くに捨ててある。\n　朝に施設の電源を入れる時はそこを探して見てくれ';
+    const noteCrate = new T.Group();
+    const nb = (w, h, d, mat, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); noteCrate.add(m); return m; };
+    nb(0.56, 0.52, 0.56, M.wood, 0, 0.26, 0);
+    for (const y of [0.09, 0.44]) nb(0.58, 0.05, 0.58, M.woodDark, 0, y, 0);
+    noteCrate.position.set(-15.42, 0, 16.62); noteCrate.rotation.y = -0.12; root.add(noteCrate);
+    addCollider(-15.72, -15.12, 16.32, 16.92, 'crate');
+    // the note: a sheet of lined paper with a hurried scrawl, a little bright so it reads in the dark
+    const nc = document.createElement('canvas'); nc.width = 256; nc.height = 352;
+    const nx = nc.getContext('2d');
+    nx.fillStyle = '#f2ecd8'; nx.fillRect(0, 0, 256, 352);
+    nx.strokeStyle = 'rgba(90,120,150,.35)'; nx.lineWidth = 2; for (let y = 52; y < 352; y += 26) { nx.beginPath(); nx.moveTo(10, y); nx.lineTo(246, y); nx.stroke(); }
+    nx.strokeStyle = 'rgba(180,60,50,.4)'; nx.beginPath(); nx.moveTo(34, 0); nx.lineTo(34, 352); nx.stroke();
+    nx.strokeStyle = '#2b2b33'; nx.lineWidth = 2.2; nx.lineCap = 'round';
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let row = 0; row < 9; row++) {      // scribbled lines of handwriting
+      const y = 46 + row * 26, len = row === 8 ? 90 : 160 + rnd() * 50; let x = 44;
+      nx.beginPath(); nx.moveTo(x, y);
+      while (x < 44 + len) { x += 4 + rnd() * 5; nx.lineTo(x, y - 3 - rnd() * 9); x += 3 + rnd() * 4; nx.lineTo(x, y - rnd() * 3); }
+      nx.stroke();
+    }
+    nx.fillStyle = 'rgba(120,90,40,.18)'; nx.beginPath(); nx.arc(196, 300, 34, 0, Math.PI * 2); nx.fill();   // a coffee ring
+    const ntex = new T.CanvasTexture(nc); ntex.colorSpace = T.SRGBColorSpace || ntex.colorSpace;
+    const note = new T.Mesh(new T.PlaneGeometry(0.21, 0.29), std({ map: ntex, color: 0xffffff, emissive: 0x2c2a24, roughness: 0.9, metalness: 0 }));
+    note.rotation.set(-Math.PI / 2, 0, 0.35); note.position.set(-15.42, 0.527, 16.62); root.add(note);
+    const noteTarget = world.target('fuse-note', 'メモを読む', -15.42, 0.55, 16.62);
+
     // ---------------------------------------------------------------- the distribution lever beside it
     const lever = new T.Group(); lever.position.set(LEVER.x, LEVER.y, LEVER.z); root.add(lever);
     const lp = (w, h, d, mat, x, y, z, parent = lever) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
@@ -145,6 +173,11 @@
         sync(); story.save && story.save(); story.objective && story.objective();
         return;
       }
+      if (id === 'fuse-note') {
+        tone(520, 0.04);
+        host.ui && host.ui.dialog && host.ui.dialog('MEMO', '走り書きのメモ', NOTE);
+        return;
+      }
       if (id === 'fuse-box') {
         if (installed()) { say('ヒューズは2本とも差し込んである。', 2.5); return; }
         const n = picked();
@@ -171,7 +204,7 @@
       }
     };
 
-    const IDS = ['fuse-yard', 'fuse-bench', 'fuse-box', 'power-lever'];
+    const IDS = ['fuse-yard', 'fuse-bench', 'fuse-box', 'power-lever', 'fuse-note'];
     const origInteract = story.interact.bind(story);
     story.interact = function (t) {
       if (t && IDS.includes(t.id) && !(this.player && this.player.hidden)) { interact(t.id); return; }
@@ -181,6 +214,7 @@
     story.enabled = function (id) {
       if (id === 'fuse-yard' || id === 'fuse-bench') return this.stage === 1 && !(this.fuses || []).includes(id);
       if (id === 'fuse-box' || id === 'power-lever') return this.stage >= 1 && this.stage <= 2;
+      if (id === 'fuse-note') return this.stage >= 1;
       return origEnabled(id);
     };
 
