@@ -1,11 +1,11 @@
 
-/* Stage 1 interaction reach: an object can be used only from within 50 cm of it.
-   "50 cm" is measured from the edge of the player's body (collision radius) to the closest place the player can
+/* Stage 1 interaction reach: an object can be used only from within 70 cm of it.
+   "70 cm" is measured from the edge of the player's body (collision radius) to the closest place the player can
    actually stand at that object, so wall-mounted boxes, lockers, counters and big machines all work the same way.
    For every target the closest standing distance is found once (and again only when the colliders change), by
    sampling rings of free positions around it that have a clear line to it. */
 (() => {
-  const REACH = 0.5;          // metres between the body edge and the object
+  const REACH = 0.7;          // metres between the body edge and the object
   const AH2 = (window.AH2 = window.AH2 || {});
   const previousMount = AH2.mount;
   AH2.mount = function (host) {
