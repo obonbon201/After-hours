@@ -10399,13 +10399,14 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       /* lines are broken at natural places (AH2.subBreak) and kept in the middle, clear of the touch buttons */
       #hud #subtitle{white-space:pre-line}
       @media (max-height:500px){#hud #subtitle{left:29%;right:29%}#stage2-subtitles{width:min(380px,42vw) !important}}
-      /* every subtitle in Mincho: in-play (stage 1 / stage 2) and the opening captions */
       /* the objective block under the place name (top left) is not shown */
       #objective{display:none !important}
       /* subtitles fade out instead of vanishing */
       #hud #subtitle,#stage2-subtitles{transition:opacity .85s ease !important}
       #hud #subtitle.ah-out,#stage2-subtitles.ah-out{opacity:0 !important}
-      #subtitle,#stage2-subtitles,#tape-text{font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Noto Serif CJK JP",serif !important}
+      /* every subtitle in Mincho: in-play (stage 1 / stage 2) and the opening captions.
+         iOS is given the Hiragino Mincho face names too, and the rule is also bound to #hud for extra weight. */
+      html body #hud #subtitle,html body #subtitle,html body #stage2-subtitles,html body #tape-text{font-family:"Hiragino Mincho ProN","HiraMinProN-W6","HiraMinProN-W3","Hiragino Mincho Pro","Yu Mincho","YuMincho","Noto Serif JP","Noto Serif CJK JP","Source Han Serif JP",serif !important;font-synthesis:none}
     </style>
   </head>
   <body>
