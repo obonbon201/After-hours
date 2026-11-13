@@ -6447,6 +6447,9 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
 
     const openL = addCollider(-HINGE - 0.08, -HINGE + 0.08, GZ - LEAF - 0.05, GZ, 'leaf-open-left', true);
     const openR = addCollider(HINGE - 0.08, HINGE + 0.08, GZ - LEAF - 0.05, GZ, 'leaf-open-right', true);
+    // while a leaf swings, its collision follows it: each leaf is a chain of short boxes laid along it
+    const SEG = 10, swingSegs = [];
+    for (const s of [-1, 1]) for (let i = 0; i < SEG; i++) swingSegs.push({ s, i, c: addCollider(0, 0, 0, 0, 'leaf-swing', true) });
     world.collisionRevision++;
 
     // merge static meshes per material: the booths cost a handful of draw calls
@@ -6463,6 +6466,17 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       firstRattle: true, passUsed: false, boxOpen: false, keyTaken: false, keyDoor: 0, keyDoorTarget: 0, nextCreak: 8 + Math.random() * 8, nextDistant: 20 + Math.random() * 20, innerOn: 0,
     };
     let angL = 0, angR = 0;
+    // place the swinging boxes on the leaves (no revision bump per frame: the player reads the boxes directly)
+    const placeSwing = (on) => {
+      for (const q of swingSegs) {
+        if (!on) { q.c.disabled = true; continue; }
+        const a = q.s < 0 ? angL : angR, dx = q.s < 0 ? Math.cos(a) : -Math.cos(a), dz = -Math.sin(a);
+        const d = (LEAF * (q.i + 0.5)) / SEG, cx = q.s * HINGE + dx * d, cz = GZ + dz * d;
+        const hx = (Math.abs(dx) * LEAF) / SEG / 2 + 0.07, hz = (Math.abs(dz) * LEAF) / SEG / 2 + 0.07;
+        q.c.minX = cx - hx; q.c.maxX = cx + hx; q.c.minZ = cz - hz; q.c.maxZ = cz + hz; q.c.disabled = false;
+      }
+    };
+    const startSwing = () => { door.collider.disabled = true; placeSwing(true); world.collisionRevision++; };
     const applyLeaves = () => {
       leafL.rotation.y = angL + gate.jig;
       leafR.rotation.y = Math.PI - angR - gate.jig * 0.8;
@@ -6479,6 +6493,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const origOpen = world.open.bind(world), origClose = world.close.bind(world);
     const finishOpen = () => {
       gate.state = STATES.OPEN; angL = angR = Math.PI / 2;
+      placeSwing(false);
       origOpen('entrance'); hideOld();
       openL.disabled = openR.disabled = false; world.collisionRevision++;
       setSignal('open'); gate.innerOn = 0.001;
@@ -6495,7 +6510,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       if (!animate) { snapOpen(); return; }
       gate.state = gate.lockDropped ? STATES.OPENING : STATES.UNLOCKING; gate.t = 0; gate.jig = 0;
       setSignal('amber');
-      if (gate.state === STATES.UNLOCKING) A.unlock(new T.Vector3(0, 1.1, GZ + 0.1)); else A.open(new T.Vector3(0, 1.4, GZ));
+      if (gate.state === STATES.UNLOCKING) A.unlock(new T.Vector3(0, 1.1, GZ + 0.1)); else { A.open(new T.Vector3(0, 1.4, GZ)); startSwing(); }
     };
     world.close = function (id) {
       if (id !== 'entrance') return origClose(id);
@@ -6510,8 +6525,8 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const beginClose = () => {
       gate.pendingClose = false; gate.state = STATES.CLOSING; gate.t = 0;
       openL.disabled = openR.disabled = true;
-      origClose('entrance'); hideOld();          // closed collider is live for the whole swing
-      world.collisionRevision++;
+      origClose('entrance'); hideOld();
+      startSwing();                              // the leaves carry their own collision while they close
       setSignal('amber'); A.close(new T.Vector3(0, 1.4, GZ - 1));
     };
 
@@ -6667,16 +6682,18 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
           lock.rotation.x = -ft * 2.4; lock.position.z = GZ + ft * 0.6;
           if (lock.position.y <= 0.06) { dropLockPose(); if (gate.chainSnd !== 2) A.chainLand(new T.Vector3(0.1, 0.05, GZ + 0.4)); }
         }
-        if (t >= T_UNLOCK) { gate.state = STATES.OPENING; gate.t = 0; A.open(new T.Vector3(0, 1.4, GZ)); }
+        if (t >= T_UNLOCK) { gate.state = STATES.OPENING; gate.t = 0; A.open(new T.Vector3(0, 1.4, GZ)); startSwing(); }
       } else if (gate.state === STATES.OPENING) {
         const pl = easeInOutCubic(clamp(gate.t / T_OPEN, 0, 1));
         const pr = easeInOutCubic(clamp((gate.t - RIGHT_DELAY) / (T_OPEN - RIGHT_DELAY), 0, 1));
         angL = pl * Math.PI / 2; angR = pr * Math.PI / 2;
+        placeSwing(true);
         if (gate.t >= T_OPEN) { finishOpen(); gate.settle = 0.7; if (!A.has('open')) A.thud(new T.Vector3(0, 1, GZ - 2)); }
       } else if (gate.state === STATES.CLOSING) {
         const p = 1 - easeInOutCubic(clamp(gate.t / T_CLOSE, 0, 1));
         angL = angR = p * Math.PI / 2;
-        if (gate.t >= T_CLOSE) { gate.state = STATES.LOCKED; angL = angR = 0; setSignal('red'); if (!A.has('close')) A.thud(new T.Vector3(0, 1, GZ)); }
+        placeSwing(true);
+        if (gate.t >= T_CLOSE) { gate.state = STATES.LOCKED; angL = angR = 0; placeSwing(false); door.collider.disabled = false; world.collisionRevision++; setSignal('red'); if (!A.has('close')) A.thud(new T.Vector3(0, 1, GZ)); }
       } else if (gate.state === STATES.OPEN) {
         if (gate.settle > 0) {
           gate.settle = Math.max(0, gate.settle - dt);
