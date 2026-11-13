@@ -91,21 +91,18 @@
     for (const y of [0.09, 0.44]) nb(0.58, 0.05, 0.58, M.woodDark, 0, y, 0);
     noteCrate.position.set(-15.42, 0, 16.62); noteCrate.rotation.y = -0.12; root.add(noteCrate);
     addCollider(-15.72, -15.12, 16.32, 16.92, 'crate');
-    // the note: a sheet of lined paper with a hurried scrawl, a little bright so it reads in the dark
+    // the note: a plain white sheet with a hurried scrawl, a little bright so it reads in the dark
     const nc = document.createElement('canvas'); nc.width = 256; nc.height = 352;
     const nx = nc.getContext('2d');
-    nx.fillStyle = '#f2ecd8'; nx.fillRect(0, 0, 256, 352);
-    nx.strokeStyle = 'rgba(90,120,150,.35)'; nx.lineWidth = 2; for (let y = 52; y < 352; y += 26) { nx.beginPath(); nx.moveTo(10, y); nx.lineTo(246, y); nx.stroke(); }
-    nx.strokeStyle = 'rgba(180,60,50,.4)'; nx.beginPath(); nx.moveTo(34, 0); nx.lineTo(34, 352); nx.stroke();
+    nx.fillStyle = '#fbfaf6'; nx.fillRect(0, 0, 256, 352);
     nx.strokeStyle = '#2b2b33'; nx.lineWidth = 2.2; nx.lineCap = 'round';
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let row = 0; row < 9; row++) {      // scribbled lines of handwriting
-      const y = 46 + row * 26, len = row === 8 ? 90 : 160 + rnd() * 50; let x = 44;
+      const y = 46 + row * 26, len = row === 8 ? 90 : 160 + rnd() * 50; let x = 30;
       nx.beginPath(); nx.moveTo(x, y);
-      while (x < 44 + len) { x += 4 + rnd() * 5; nx.lineTo(x, y - 3 - rnd() * 9); x += 3 + rnd() * 4; nx.lineTo(x, y - rnd() * 3); }
+      while (x < 30 + len) { x += 4 + rnd() * 5; nx.lineTo(x, y - 3 - rnd() * 9); x += 3 + rnd() * 4; nx.lineTo(x, y - rnd() * 3); }
       nx.stroke();
     }
-    nx.fillStyle = 'rgba(120,90,40,.18)'; nx.beginPath(); nx.arc(196, 300, 34, 0, Math.PI * 2); nx.fill();   // a coffee ring
     const ntex = new T.CanvasTexture(nc); ntex.colorSpace = T.SRGBColorSpace || ntex.colorSpace;
     const note = new T.Mesh(new T.PlaneGeometry(0.21, 0.29), std({ map: ntex, color: 0xffffff, emissive: 0x2c2a24, roughness: 0.9, metalness: 0 }));
     note.rotation.set(-Math.PI / 2, 0, 0.35); note.position.set(-15.42, 0.527, 16.62); root.add(note);
