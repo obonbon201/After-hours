@@ -185,6 +185,16 @@
     const s14 = () => story.ah14 && story.ah14.story;
     let leverAnim = null, pulling = false;
     const say = (t, d) => host.ui && host.ui.subtitle && host.ui.subtitle(t, d);
+    // the supplied click for a fuse going into its holder
+    let insertBuf = null, insertBytes = null;
+    fetch('./assets/audio/sfx/fuse-insert.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { insertBytes = b; decodeInsert(); }).catch(() => {});
+    const decodeInsert = () => { const a = host.audio; if (insertBuf || !insertBytes || !a || !a.ctx) return; const b = insertBytes; insertBytes = null; a.ctx.decodeAudioData(b, (buf) => { insertBuf = buf; }, () => {}); };
+    const playInsert = (delay) => {
+      const a = host.audio; decodeInsert();
+      if (!insertBuf || !a || !a.ctx || !a.master || a.ctx.state === 'closed') return false;
+      const src = a.ctx.createBufferSource(), g = a.ctx.createGain(); g.gain.value = 0.9;
+      src.buffer = insertBuf; src.connect(g).connect(a.master); src.start(a.ctx.currentTime + delay); return true;
+    };
     const tone = (f, d) => { try { host.audio && host.audio.tone && host.audio.tone(f, d); } catch (e) {} };
     const removeTarget = (t) => { const i = world.interactables.indexOf(t); if (i >= 0) world.interactables.splice(i, 1); };
     const addTarget = (t) => { if (!world.interactables.includes(t)) world.interactables.push(t); };
@@ -234,7 +244,8 @@
         const n = picked();
         if (n < NEED) { say(`ヒューズが足りない。 ${n} / ${NEED}`, 2.5); return; }
         story.fuses.push('box');
-        tone(260, 0.07); setTimeout(() => tone(200, 0.09), 160); setTimeout(() => tone(260, 0.07), 420); setTimeout(() => tone(200, 0.09), 580);
+        // one click per fuse
+        if (!(playInsert(0) && playInsert(0.62))) { tone(260, 0.07); setTimeout(() => tone(200, 0.09), 160); setTimeout(() => tone(260, 0.07), 420); setTimeout(() => tone(200, 0.09), 580); }
         say('ヒューズを2本、差し込んだ。横の配電レバーを引けば、電源が戻るはずだ。', 4.5);
         sync(); story.save && story.save(); story.objective && story.objective();
         return;
@@ -278,7 +289,7 @@
         arm.rotation.z = leverAnim.from + (leverAnim.to - leverAnim.from) * e;
         if (leverAnim.t >= 1) leverAnim = null;
       }
-      acc += dt; if (acc > 0.25) { acc = 0; sync(); }
+      acc += dt; if (acc > 0.25) { acc = 0; sync(); if (!insertBuf) decodeInsert(); }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
