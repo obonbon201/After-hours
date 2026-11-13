@@ -10120,6 +10120,9 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       /* v1.9.5: in-play subtitles sit over the torch pool on the ground. No dark band or wide dark glow
          (they turned the lit floor into a dark smudge); bright lettering with a tight outline instead. */
       #hud #subtitle{background:none;color:#fbf4e2;font-weight:600;text-shadow:0 0 1px #000,1px 1px 1px #000,-1px 1px 1px #000,1px -1px 1px #000,-1px -1px 1px #000,0 2px 3px rgba(0,0,0,.55)}
+      /* in-play subtitles one step larger on phones (were 10px landscape / 11px portrait) */
+      @media (max-height:500px), (max-width:600px){#hud #subtitle{font-size:13px;line-height:1.75}}
+      @media (max-height:500px){#hud #subtitle{left:20%;right:20%}}
     </style>
   </head>
   <body>
