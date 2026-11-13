@@ -10358,6 +10358,8 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       /* in-play subtitles larger on phones (were 10px landscape / 11px portrait) */
       @media (max-height:500px), (max-width:600px){#hud #subtitle{font-size:16px;line-height:1.7}}
       @media (max-height:500px){#hud #subtitle{left:16%;right:16%}}
+      /* every subtitle in Mincho: in-play (stage 1 / stage 2) and the opening captions */
+      #subtitle,#stage2-subtitles,#tape-text{font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Noto Serif CJK JP",serif !important}
     </style>
   </head>
   <body>
