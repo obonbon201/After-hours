@@ -112,15 +112,15 @@
     const noteTarget = world.target('fuse-note', 'メモを読む', -15.42, 0.55, 16.62);
 
     // ---------------------------------------------------------------- the distribution lever: a wall-mounted knife switch
-    // (orange-red moulded housing with an arched cover in three ribs and a warning band, a green base, and a green
+    // (grey moulded housing with an arched cover in three ribs and a warning band, a dark grey base, and a dark grey
     // T-shaped handle that swings over the arch: up = off, down = on). Local +x points out of the wall.
     const WALL_X = -15.825;
     const lever = new T.Group(); lever.position.set(WALL_X, LEVER.y, LEVER.z); root.add(lever);
     const KS = {
-      body: std({ color: 0xe0502c, roughness: 0.48, metalness: 0 }),
-      base: std({ color: 0x1f9c72, roughness: 0.5, metalness: 0 }),
+      body: std({ color: 0x8e8c86, roughness: 0.5, metalness: 0.05 }),
+      base: std({ color: 0x5a5e5c, roughness: 0.55, metalness: 0.1 }),
       slot: std({ color: 0x1a1412, roughness: 0.8, metalness: 0 }),
-      blue: std({ color: 0x2f6f9a, roughness: 0.4, metalness: 0.2 }),
+      blue: std({ color: 0xa4a8a6, roughness: 0.35, metalness: 0.6 }),
     };
     const kb = (w, h, d, mat, x, y, z, parent = lever) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
     const hole = (x, y, z, r = 0.014) => { const m = new T.Mesh(new T.CylinderGeometry(r, r, 0.012, 12), KS.slot); m.rotation.z = Math.PI / 2; m.position.set(x, y, z); lever.add(m); };
