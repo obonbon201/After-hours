@@ -8128,7 +8128,15 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       }
       if (id === 'fuse-note') {
         tone(520, 0.04);
-        host.ui && host.ui.dialog && host.ui.dialog('MEMO', '走り書きのメモ', NOTE);
+        if (host.ui && host.ui.dialog) {
+          host.ui.dialog('MEMO', '走り書きのメモ', NOTE);
+          const dlg = document.getElementById('dialog');
+          if (dlg) {
+            dlg.classList.add('ah-paper');   // the sheet itself (style in the page head)
+            const off = () => { if (dlg.hidden) { dlg.classList.remove('ah-paper'); mo.disconnect(); } };
+            const mo = new MutationObserver(off); mo.observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
+          }
+        }
         return;
       }
       if (id === 'fuse-box') {
@@ -10656,6 +10664,18 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       @media (max-height:500px){#hud #subtitle{left:29%;right:29%}#stage2-subtitles{width:min(380px,42vw) !important}}
       /* the objective block under the place name (top left) is not shown */
       #objective{display:none !important}
+      /* a note read in the dialog looks like the sheet of paper itself */
+      #dialog.ah-paper{background:#05090bcc}
+      #dialog.ah-paper .panel{position:relative;width:min(430px,92vw);border:0;padding:22px 26px 16px 46px;color:#2a2722;border-radius:2px;transform:rotate(-1.2deg);
+        background:linear-gradient(90deg,transparent 31px,rgba(190,70,60,.45) 31px,rgba(190,70,60,.45) 33px,transparent 33px),
+          repeating-linear-gradient(180deg,transparent 0,transparent 29px,rgba(80,110,140,.28) 29px,rgba(80,110,140,.28) 30px),
+          radial-gradient(circle at 82% 86%,rgba(130,95,40,.16) 0 34px,transparent 35px),
+          linear-gradient(170deg,#f3ecd8,#e8dfc4 70%,#ddd2b2);
+        background-position:0 0,0 14px,0 0,0 0;box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.08) inset}
+      #dialog.ah-paper #dialog-label{color:#8a7d62;letter-spacing:.24em;border:0;margin:0 0 2px}
+      #dialog.ah-paper #dialog-title{color:#3a3328;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-size:15px;letter-spacing:.08em;margin:0 0 6px;border:0}
+      #dialog.ah-paper #dialog-body{color:#24211c;font-family:"Klee","Klee One","Hiragino Mincho ProN","Yu Mincho",serif;font-weight:600;font-size:16px;line-height:30px;text-shadow:none;letter-spacing:.03em}
+      #dialog.ah-paper #dialog-close{margin-top:14px;background:transparent;color:#4a4236;border:1px solid #4a423666}
       /* subtitles fade out instead of vanishing */
       #hud #subtitle,#stage2-subtitles{transition:opacity .85s ease !important}
       #hud #subtitle.ah-out,#stage2-subtitles.ah-out{opacity:0 !important}

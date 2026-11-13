@@ -175,7 +175,15 @@
       }
       if (id === 'fuse-note') {
         tone(520, 0.04);
-        host.ui && host.ui.dialog && host.ui.dialog('MEMO', '走り書きのメモ', NOTE);
+        if (host.ui && host.ui.dialog) {
+          host.ui.dialog('MEMO', '走り書きのメモ', NOTE);
+          const dlg = document.getElementById('dialog');
+          if (dlg) {
+            dlg.classList.add('ah-paper');   // the sheet itself (style in the page head)
+            const off = () => { if (dlg.hidden) { dlg.classList.remove('ah-paper'); mo.disconnect(); } };
+            const mo = new MutationObserver(off); mo.observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
+          }
+        }
         return;
       }
       if (id === 'fuse-box') {
