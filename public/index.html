@@ -378,7 +378,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       const hot = o.hot || [0.3, 0.55, 26, 1.4], spill = o.spill || [0.43, 1, 17, 1.7], color = o.color || '#ffcf96';   // a soft, slightly pale orange bulb
       light.color.set(color); light.angle = hot[0]; light.penumbra = hot[1]; light.distance = hot[2]; light.decay = hot[3];
       const sp = new T.SpotLight(color, 0, spill[2], spill[0], spill[1], spill[3]);
-      sp.castShadow = false; sp.target = light.target; light.add(sp);
+      sp.castShadow = false; sp.target = light.target; sp.position.set(0, 0, 0); light.add(sp);   // a SpotLight starts 1 m up (DEFAULT_UP): keep the spill in the bulb
       const len = o.len || 9, geo = new T.ConeGeometry(len * Math.tan(spill[0] * 0.86), len, 32, 1, true);
       geo.rotateX(-Math.PI / 2); geo.translate(0, 0, len / 2);
       const mat = new T.ShaderMaterial({
