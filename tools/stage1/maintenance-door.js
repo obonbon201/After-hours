@@ -34,7 +34,7 @@
     leaf.rotation.y = 0;
     setBox(CLOSED);
 
-    const target = world.target('maint-door', 'メンテナンス室の扉を開ける', -10.08, 1.2, 21.59);
+    const target = world.target('maint-door', '開ける', -10.08, 1.2, 21.59);
     // the interaction point rides on the middle of the leaf, so the door itself is what you use, open or closed
     const mid = new (target.position.constructor)();
     const placeTarget = () => { leaf.updateMatrixWorld(true); mid.set(0, 1.2, -0.63); leaf.localToWorld(mid); target.position.copy(mid); };
@@ -89,7 +89,7 @@
         if (overlaps(OPEN)) { col.disabled = true; world.collisionRevision = (world.collisionRevision | 0) + 1; door.pending = OPEN; }
         else setBox(OPEN);
       }
-      target.label = door.open ? 'メンテナンス室の扉を閉める' : 'メンテナンス室の扉を開ける';
+      target.label = door.open ? '閉める' : '開ける';
       sound(door.open);
     };
 
