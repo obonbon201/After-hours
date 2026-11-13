@@ -7630,16 +7630,16 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const tmp = new T.Vector3();
     let clock = 0;
     // walking in through the opened entrance gate: one line telling the player where to go first
-    let gateZ = null, gateSaid = false;
+    let wasOutside = false, gateSaid = false;
     const GATE_LINE = 'メンテナンスルームでパークの電源を稼働させろ';
     const watchGate = () => {
       const p = host.player && host.player.position;
       if (!p || gateSaid) return;
-      if (gateZ !== null && story && story.stage >= 1 && gateZ >= 34.2 && p.z < 33.8 && Math.abs(p.x) < 6.5) {
+      if (p.z >= 34.2) wasOutside = true;               // stood outside the gate line at some point
+      else if (wasOutside && p.z < 33.8 && Math.abs(p.x) < 6.5 && story && story.stage >= 1) {
         gateSaid = true;
         if (host.ui && host.ui.subtitle) host.ui.subtitle(GATE_LINE, 5);
       }
-      gateZ = p.z;
     };
     const update = (dt) => {
       clock += dt;
