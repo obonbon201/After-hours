@@ -8158,15 +8158,21 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     let leverAnim = null, pulling = false;
     const say = (t, d) => host.ui && host.ui.subtitle && host.ui.subtitle(t, d);
     // the supplied click for a fuse going into its holder
-    let insertBuf = null, insertBytes = null;
-    fetch('./assets/audio/sfx/fuse-insert.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { insertBytes = b; decodeInsert(); }).catch(() => {});
-    const decodeInsert = () => { const a = host.audio; if (insertBuf || !insertBytes || !a || !a.ctx) return; const b = insertBytes; insertBytes = null; a.ctx.decodeAudioData(b, (buf) => { insertBuf = buf; }, () => {}); };
-    const playInsert = (delay) => {
-      const a = host.audio; decodeInsert();
-      if (!insertBuf || !a || !a.ctx || !a.master || a.ctx.state === 'closed') return false;
-      const src = a.ctx.createBufferSource(), g = a.ctx.createGain(); g.gain.value = 0.9;
-      src.buffer = insertBuf; src.connect(g).connect(a.master); src.start(a.ctx.currentTime + delay); return true;
+    // and the supplied clank for the lever being thrown
+    const SFX = { insert: './assets/audio/sfx/fuse-insert.mp3', lever: './assets/audio/sfx/lever-pull.mp3' };
+    const sBytes = {}, sBuf = {};
+    const decodeSfx = () => {
+      const a = host.audio; if (!a || !a.ctx) return;
+      for (const k of Object.keys(sBytes)) { if (sBuf[k] || !sBytes[k]) continue; const b = sBytes[k]; sBytes[k] = null; a.ctx.decodeAudioData(b, (buf) => { sBuf[k] = buf; }, () => {}); }
     };
+    for (const [k, url] of Object.entries(SFX)) fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { if (b) { sBytes[k] = b; decodeSfx(); } }).catch(() => {});
+    const playSfx = (k, delay = 0, gain = 0.9) => {
+      const a = host.audio; decodeSfx();
+      if (!sBuf[k] || !a || !a.ctx || !a.master || a.ctx.state === 'closed') return false;
+      const src = a.ctx.createBufferSource(), g = a.ctx.createGain(); g.gain.value = gain;
+      src.buffer = sBuf[k]; src.connect(g).connect(a.master); src.start(a.ctx.currentTime + delay); return true;
+    };
+    const playInsert = (delay) => playSfx('insert', delay);
     const tone = (f, d) => { try { host.audio && host.audio.tone && host.audio.tone(f, d); } catch (e) {} };
     const removeTarget = (t) => { const i = world.interactables.indexOf(t); if (i >= 0) world.interactables.splice(i, 1); };
     const addTarget = (t) => { if (!world.interactables.includes(t)) world.interactables.push(t); };
@@ -8232,7 +8238,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
         pulling = true;
         leverAnim = { t: 0, from: arm.rotation.z, to: DOWN, dur: 0.45 };
         const s = s14();
-        try { s && s.sfx && s.sfx.clunk ? s.sfx.clunk(new T.Vector3(LEVER.x, LEVER.y, LEVER.z), 'lever') : tone(140, 0.2); } catch (e) { tone(140, 0.2); }
+        if (!playSfx('lever', 0, 1.0)) { try { s && s.sfx && s.sfx.clunk ? s.sfx.clunk(new T.Vector3(LEVER.x, LEVER.y, LEVER.z), 'lever') : tone(140, 0.2); } catch (e) { tone(140, 0.2); } }
         setTimeout(() => {
           try { if (s && s.turningPoint) s.turningPoint(); else story.setStage && story.setStage(2); } catch (e) { console.warn('[power-restore]', e); }
           pulling = false; sync();
@@ -8264,7 +8270,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
         arm.rotation.z = leverAnim.from + (leverAnim.to - leverAnim.from) * e;
         if (leverAnim.t >= 1) leverAnim = null;
       }
-      acc += dt; if (acc > 0.25) { acc = 0; sync(); if (!insertBuf) decodeInsert(); }
+      acc += dt; if (acc > 0.25) { acc = 0; sync(); if (!sBuf.insert || !sBuf.lever) decodeSfx(); }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
