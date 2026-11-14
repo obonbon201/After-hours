@@ -112,7 +112,7 @@
     // street lamps
     for (const [x, z] of STREET) {
       const f = addFixture('street', x, z);
-      pools.add(flat(5.0, x, z), f, col(HONEY, 0.55));
+      pools.add(flat(5.0, x, z), f, col(HONEY, 0.45));
       const head = new T.CylinderGeometry(0.29, 0.29, 0.34, 12, 1); head.translate(x, 5.15, z); heads.add(head, f, col(HONEY, 1.0));
       haloL.point(x, 5.12, z, f, col(HONEY, 0.5));
     }
