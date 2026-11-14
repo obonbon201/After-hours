@@ -39,10 +39,10 @@
 
   AH2.dateCard = function (done) {
     decode();
-    play('ring', RING_AT, 0.5); play('pickup', RING_END, 0.9);
+    play('ring', RING_AT, 0.25); play('pickup', RING_END, 0.45);
     const voiceLen = play('voice', VOICE_AT, 1.0);
     // 3 s after "10月31日" is fully shown, or once the voice on the line has finished
-    const OUT_AT = Math.max(FIRST + GAP + FADE_IN + HOLD, voiceLen ? VOICE_AT + voiceLen + 0.6 : 0);
+    const OUT_AT = Math.max(FIRST + 2 * GAP + FADE_IN + HOLD, voiceLen ? VOICE_AT + voiceLen + 0.6 : 0);
     let finished = false;
     const finish = () => { if (finished) return; finished = true; try { done && done(); } catch (e) { console.warn('[date-card]', e); } };
     try {
@@ -55,6 +55,7 @@
         'font-size:clamp(22px,5.2vmin,44px);letter-spacing:.18em;font-weight:500;text-shadow:0 0 12px rgba(255,255,255,.18)}' +
         '#ah-date-card span{opacity:0;animation:ahDateIn ' + FADE_IN + 's ease both}' +
         '#ah-date-card span.a{animation-delay:' + FIRST + 's}#ah-date-card span.b{animation-delay:' + (FIRST + GAP) + 's}' +
+        '#ah-date-card span.c{animation-delay:' + (FIRST + 2 * GAP) + 's;font-variant-numeric:tabular-nums}' +
         '@keyframes ahPhoneSubIn{from{opacity:0}to{opacity:1}}@keyframes ahPhoneSubOut{from{opacity:1}to{opacity:0}}' +
         '#ah-date-card .tel{position:absolute;left:10%;right:10%;bottom:12%;text-align:center}' +
         '#ah-date-card .tel p{position:absolute;left:0;right:0;bottom:0;margin:0;opacity:0;white-space:pre-line;color:#f2efe8;' +
@@ -63,7 +64,12 @@
       const card = document.createElement('div');
       card.id = 'ah-date-card';
       card.setAttribute('aria-live', 'polite');
-      card.innerHTML = '<div class="row"><span class="a">1997年</span><span class="b">10月31日</span></div>';
+      card.innerHTML = '<div class="row"><span class="a">1997年</span><span class="b">10月31日</span><span class="c">PM 22:25:34</span></div>';
+      // the clock: shown from 22:25:34 and ticking on, one second at a time, from the moment it starts to appear
+      const clock = card.querySelector('span.c'), T0 = 22 * 3600 + 25 * 60 + 34, born = performance.now() + (FIRST + 2 * GAP) * 1000;
+      const pad = (n) => String(n).padStart(2, '0');
+      const tick = () => { const t = T0 + Math.max(0, Math.floor((performance.now() - born) / 1000)); clock.textContent = 'PM ' + pad(Math.floor(t / 3600) % 24) + ':' + pad(Math.floor(t / 60) % 60) + ':' + pad(t % 60); };
+      const clockIv = setInterval(() => { if (!card.isConnected) return clearInterval(clockIv); tick(); }, 250);
       // the voice's subtitles, only when the voice is actually playing
       if (voiceLen) {
         const tel = document.createElement('div'); tel.className = 'tel';
