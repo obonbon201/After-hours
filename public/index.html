@@ -5784,6 +5784,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(14,14,12,${0.2 + r() * 0.4})`; g.beginPath(); g.ellipse(r() * w, r() * h, 2 + r() * 6, 2 + r() * 5, r() * 3, 0, 6.28); g.fill(); }
     });
     const texGlow = decalTex(256, 256, 109, (g, w, h) => {
+      g.fillStyle = '#000'; g.fillRect(0, 0, w, h);   // opaque: only ever added (no Safari alpha speckle)
       const rg = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
       rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(0.4, 'rgba(255,255,255,0.35)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = rg; g.fillRect(0, 0, w, h);
@@ -6253,6 +6254,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const haloTex = (() => {
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.fillStyle = '#000'; g.fillRect(0, 0, 64, 64);   // opaque: only ever added
       r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.18, 'rgba(255,255,255,0.75)');
       r.addColorStop(0.45, 'rgba(255,255,255,0.22)'); r.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = r; g.fillRect(0, 0, 64, 64);
@@ -7086,6 +7088,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     })();
     const glowCanvas = (() => {
       const c = canvas(128, 128), g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.fillStyle = '#000'; g.fillRect(0, 0, 128, 128);   // opaque: only ever added (no Safari alpha speckle)
       rg.addColorStop(0, 'rgba(255,255,255,0.95)'); rg.addColorStop(0.35, 'rgba(255,255,255,0.4)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = rg; g.fillRect(0, 0, 128, 128); return c;
     })();
@@ -8342,7 +8345,9 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
     const col = (hex, k = 1) => { const c = new T.Color(hex); return [c.r * k, c.g * k, c.b * k]; };
 
     // ------------------------------------------------------------------ textures
-    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new T.CanvasTexture(c); return t; };
+    // drawn on opaque black: these are only ever added, and an opaque sheet keeps Safari from un-premultiplying
+    // faint alpha into coloured speckles
+    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, w, h); draw(g, w, h); const t = new T.CanvasTexture(c); return t; };
     const glowTex = canvasTex(128, 128, (g, w) => {
       const r = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
       r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,.55)'); r.addColorStop(0.6, 'rgba(255,255,255,.14)'); r.addColorStop(1, 'rgba(255,255,255,0)');

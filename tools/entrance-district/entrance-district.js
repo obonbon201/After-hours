@@ -123,6 +123,7 @@
     })();
     const glowCanvas = (() => {
       const c = canvas(128, 128), g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.fillStyle = '#000'; g.fillRect(0, 0, 128, 128);   // opaque: only ever added (no Safari alpha speckle)
       rg.addColorStop(0, 'rgba(255,255,255,0.95)'); rg.addColorStop(0.35, 'rgba(255,255,255,0.4)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = rg; g.fillRect(0, 0, 128, 128); return c;
     })();

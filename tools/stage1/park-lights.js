@@ -51,7 +51,9 @@
     const col = (hex, k = 1) => { const c = new T.Color(hex); return [c.r * k, c.g * k, c.b * k]; };
 
     // ------------------------------------------------------------------ textures
-    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new T.CanvasTexture(c); return t; };
+    // drawn on opaque black: these are only ever added, and an opaque sheet keeps Safari from un-premultiplying
+    // faint alpha into coloured speckles
+    const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, w, h); draw(g, w, h); const t = new T.CanvasTexture(c); return t; };
     const glowTex = canvasTex(128, 128, (g, w) => {
       const r = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
       r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,.55)'); r.addColorStop(0.6, 'rgba(255,255,255,.14)'); r.addColorStop(1, 'rgba(255,255,255,0)');
