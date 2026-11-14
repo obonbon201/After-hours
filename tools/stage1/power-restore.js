@@ -241,6 +241,24 @@
           const dlg = document.getElementById('dialog');
           if (dlg) {
             dlg.classList.add('ah-paper');   // the sheet itself (style in the page head)
+            // scrawl: each character sits a little crooked, as if dashed off with a cheap pen
+            const body = document.getElementById('dialog-body');
+            if (body) {
+              let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
+              body.replaceChildren();
+              let drift = 0;
+              for (const ch of NOTE) {
+                if (ch === '\n') { body.appendChild(document.createElement('br')); drift = 0; continue; }
+                // closing punctuation rides with the character before it, so it never starts a line
+                if ('、。」）'.includes(ch) && body.lastChild && body.lastChild.className === 'ah-ch') { body.lastChild.textContent += ch; continue; }
+                const sp = document.createElement('span'); sp.className = 'ah-ch'; sp.textContent = ch;
+                drift = drift * 0.7 + rnd() * 0.9;                       // the line wanders up and down a little
+                const rot = rnd() * 5, y = drift + rnd() * 0.8, sc = 1 + rnd() * 0.07, x = rnd() * 0.6;
+                sp.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + rot.toFixed(1) + 'deg) scale(' + sc.toFixed(3) + ')';
+                sp.style.opacity = (0.84 + Math.abs(rnd()) * 0.16).toFixed(2);   // uneven ink
+                body.appendChild(sp);
+              }
+            }
             const off = () => { if (dlg.hidden) { dlg.classList.remove('ah-paper'); mo.disconnect(); } };
             const mo = new MutationObserver(off); mo.observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
           }
