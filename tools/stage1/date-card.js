@@ -9,8 +9,9 @@
    voice has finished. */
 (() => {
   const AH2 = (window.AH2 = window.AH2 || {});
-  const FIRST = 3.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
-  const RING_END = 2.62, VOICE_AT = RING_END + 0.4;   // the ring is cut mid second call; the voice follows the pickup
+  const RING_AT = 2.0;                                 // a moment of silence in the black before the phone rings
+  const RING_END = RING_AT + 2.62, VOICE_AT = RING_END + 0.4;   // the ring is cut mid second call; the voice follows the pickup
+  const FIRST = RING_AT + 3.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
 
   // --- the telephone: buffers decoded on the game's audio context as soon as there is one
   let host = null;
@@ -32,7 +33,7 @@
 
   AH2.dateCard = function (done) {
     decode();
-    play('ring', 0, 0.5); play('pickup', RING_END, 0.9);
+    play('ring', RING_AT, 0.5); play('pickup', RING_END, 0.9);
     const voiceLen = play('voice', VOICE_AT, 1.0);
     // 3 s after "10月31日" is fully shown, or once the voice on the line has finished
     const OUT_AT = Math.max(FIRST + GAP + FADE_IN + HOLD, voiceLen ? VOICE_AT + voiceLen + 0.6 : 0);
