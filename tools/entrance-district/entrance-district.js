@@ -714,15 +714,26 @@
       // branch square lantern: steady, breathing a little
       const lan = 0.92 + Math.sin(clock * 1.3) * 0.05;
       M.lantern.color.setRGB(1.0 * lan, 0.85 * lan, 0.63 * lan);
+      // with the park power on (park-lights.js) everything settles: steady honey street lamps, steady tubes
+      const lit = world.parkLit || 0, fade = typeof world.parkFade === 'number' ? world.parkFade : 1;
       // dying sodium lamps: one stutters, one fades out for seconds at a time
-      const a = stutter(clock, 2.1, 2.7) * (Math.sin(clock * 0.31) > 0.94 ? 0.25 : 1);
-      const b = Math.max(0.05, Math.min(1, 0.55 + Math.sin(clock * 0.23 + 1) * 0.9)) * stutter(clock, 6.3, 5.1);
-      [a, b].forEach((k, i) => { const L = lampHeads[i]; L.mat.color.setRGB(0.96 * k + 0.08, 0.76 * k + 0.07, 0.48 * k + 0.05); L.pool.material.opacity = 0.12 * k; L.halo.material.opacity = 0.3 * k; });
-      for (const B of bulbs) B.m.material.color.set(Math.sin(clock * B.rate + B.ph) * Math.sin(clock * B.rate * 0.37 + B.ph) > -0.2 ? '#ffe2a8' : '#4a4438');
+      let a = stutter(clock, 2.1, 2.7) * (Math.sin(clock * 0.31) > 0.94 ? 0.25 : 1);
+      let b = Math.max(0.05, Math.min(1, 0.55 + Math.sin(clock * 0.23 + 1) * 0.9)) * stutter(clock, 6.3, 5.1);
+      if (lit) { a = (a + (0.85 - a) * lit) * fade; b = (b + (0.85 - b) * lit) * fade; }
+      [a, b].forEach((k, i) => {
+        const L = lampHeads[i];
+        if (lit) L.mat.color.setRGB((0.84 * k + 0.06) * 1, 0.64 * k + 0.05, 0.44 * k + 0.04); else L.mat.color.setRGB(0.96 * k + 0.08, 0.76 * k + 0.07, 0.48 * k + 0.05);
+        L.pool.material.opacity = 0.12 * k; L.halo.material.opacity = 0.3 * k;
+      });
+      for (const [i, B] of bulbs.entries()) {
+        const on = lit ? (i % 11 !== 4) : Math.sin(clock * B.rate + B.ph) * Math.sin(clock * B.rate * 0.37 + B.ph) > -0.2;   // powered: steady, one dead bulb in eleven
+        B.m.material.color.set(on ? '#ffe2a8' : '#4a4438');
+      }
       // fluorescent tubes: a buzz and a stutter; the alley one goes out now and then
       tubes.forEach((t, i) => {
         let k = (0.9 + Math.sin(clock * 50 + i) * 0.05) * stutter(clock, t.seed, 3.3 + i);
-        if (i === 1 && Math.sin(clock * 0.21 + 2) > 0.9) k *= Math.sin(clock * 31) > 0.3 ? 0.9 : 0.05;
+        if (lit) k = (k + (0.75 - k) * lit) * fade;   // powered: a weak, steady tube
+        else if (i === 1 && Math.sin(clock * 0.21 + 2) > 0.9) k *= Math.sin(clock * 31) > 0.3 ? 0.9 : 0.05;
         t.mat.color.setRGB(0.12 + 0.78 * k, 0.14 + 0.82 * k, 0.13 + 0.8 * k); t.pool.material.opacity = 0.1 * k; t.halo.material.opacity = 0.22 * k;
       });
       // truck hazards
