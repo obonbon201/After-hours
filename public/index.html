@@ -7786,12 +7786,39 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
    "1997年", then "10月31日". It holds for 3 seconds and the lettering fades out; once it is gone the black cuts
    away at once and the game (staff memo) continues.
    Called from the opening's end callback as AH2.dateCard(done). The timing is pure CSS animation, so it stays
-   steady even while the game is busy starting up behind the card. */
+   steady even while the game is busy starting up behind the card.
+   Sound over the black: an old telephone rings into its second call, the receiver is picked up and a voice speaks
+   down the line (phone-voice.mp3, if present); the date waits ~3 s for the pickup and the card holds until the
+   voice has finished. */
 (() => {
   const AH2 = (window.AH2 = window.AH2 || {});
-  const FIRST = 0.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
-  const OUT_AT = FIRST + GAP + FADE_IN + HOLD;   // 3 s after "10月31日" is fully shown
+  const FIRST = 3.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
+  const RING_END = 2.62, VOICE_AT = RING_END + 0.4;   // the ring is cut mid second call; the voice follows the pickup
+
+  // --- the telephone: buffers decoded on the game's audio context as soon as there is one
+  let host = null;
+  const FILES = { ring: './assets/audio/sfx/phone-ring.mp3', pickup: './assets/audio/sfx/phone-pickup.mp3', voice: './assets/audio/sfx/phone-voice.mp3' };
+  const bytes = {}, buf = {};
+  const decode = () => {
+    const a = host && host.audio; if (!a || !a.ctx) return;
+    for (const k of Object.keys(bytes)) { if (buf[k] || !bytes[k]) continue; const b = bytes[k]; bytes[k] = null; a.ctx.decodeAudioData(b, (x) => { buf[k] = x; }, () => {}); }
+  };
+  for (const [k, url] of Object.entries(FILES)) fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { if (b) { bytes[k] = b; decode(); } }).catch(() => {});
+  const previousMount = AH2.mount;
+  AH2.mount = function (h) { const r = previousMount ? previousMount.apply(this, arguments) : undefined; host = h; decode(); const iv = setInterval(() => { decode(); if (buf.ring && buf.pickup) clearInterval(iv); }, 1000); return r; };
+  const play = (k, at, gain) => {
+    const a = host && host.audio; if (!a || !a.ctx || !a.master || !buf[k]) return 0;
+    if (a.ctx.state === 'suspended') a.ctx.resume().catch(() => {});
+    const s = a.ctx.createBufferSource(), g = a.ctx.createGain(); g.gain.value = gain; s.buffer = buf[k]; s.connect(g).connect(a.master); s.start(a.ctx.currentTime + at);
+    return buf[k].duration;
+  };
+
   AH2.dateCard = function (done) {
+    decode();
+    play('ring', 0, 0.5); play('pickup', RING_END, 0.9);
+    const voiceLen = play('voice', VOICE_AT, 1.0);
+    // 3 s after "10月31日" is fully shown, or once the voice on the line has finished
+    const OUT_AT = Math.max(FIRST + GAP + FADE_IN + HOLD, voiceLen ? VOICE_AT + voiceLen + 0.6 : 0);
     let finished = false;
     const finish = () => { if (finished) return; finished = true; try { done && done(); } catch (e) { console.warn('[date-card]', e); } };
     try {
