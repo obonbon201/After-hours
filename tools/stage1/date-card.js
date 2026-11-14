@@ -9,7 +9,7 @@
    voice has finished. */
 (() => {
   const AH2 = (window.AH2 = window.AH2 || {});
-  const RING_AT = 2.0;                                 // a moment of silence in the black before the phone rings
+  const RING_AT = 1.0;                                 // a moment of silence in the black before the phone rings
   const RING_END = RING_AT + 2.62, VOICE_AT = RING_END + 0.4;   // the ring is cut mid second call; the voice follows the pickup
   const FIRST = RING_AT + 3.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
 
