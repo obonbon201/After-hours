@@ -11,6 +11,12 @@
   const AH2 = (window.AH2 = window.AH2 || {});
   const RING_AT = 1.0;                                 // a moment of silence in the black before the phone rings
   const RING_END = RING_AT + 2.62, VOICE_AT = RING_END + 0.4;   // the ring is cut mid second call; the voice follows the pickup
+  // what Logan says down the line, timed to phone-voice.mp3 (seconds from the start of the voice)
+  const LINES = [
+    [0.0, 2.6, 'もしもし、ベンか？俺だ、ローガンだ。'],
+    [2.75, 8.95, 'あー…昨日の深夜に、パークの敷地内で不審者を見たという通報を受けた。'],
+    [9.15, 11.2, '今日の夜、行って確かめてくれ。'],
+  ];
   const FIRST = RING_AT + 3.4, FADE_IN = 1.1, GAP = 1.1, HOLD = 3.0, FADE_OUT = 1.0;
 
   // --- the telephone: buffers decoded on the game's audio context as soon as there is one
@@ -48,11 +54,27 @@
         '#ah-date-card .row{animation:ahDateOut ' + FADE_OUT + 's ease ' + OUT_AT + 's both;display:flex;gap:.9em;align-items:baseline;color:#fff;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;' +
         'font-size:clamp(22px,5.2vmin,44px);letter-spacing:.18em;font-weight:500;text-shadow:0 0 12px rgba(255,255,255,.18)}' +
         '#ah-date-card span{opacity:0;animation:ahDateIn ' + FADE_IN + 's ease both}' +
-        '#ah-date-card span.a{animation-delay:' + FIRST + 's}#ah-date-card span.b{animation-delay:' + (FIRST + GAP) + 's}';
+        '#ah-date-card span.a{animation-delay:' + FIRST + 's}#ah-date-card span.b{animation-delay:' + (FIRST + GAP) + 's}' +
+        '@keyframes ahPhoneSubIn{from{opacity:0}to{opacity:1}}@keyframes ahPhoneSubOut{from{opacity:1}to{opacity:0}}' +
+        '#ah-date-card .tel{position:absolute;left:10%;right:10%;bottom:12%;text-align:center}' +
+        '#ah-date-card .tel p{position:absolute;left:0;right:0;bottom:0;margin:0;opacity:0;white-space:pre-line;color:#f2efe8;' +
+        'font-family:"Hiragino Mincho ProN","HiraMinProN-W6","HiraMinProN-W3","Yu Mincho","YuMincho","Noto Serif JP",serif;font-synthesis:none;' +
+        'font-size:clamp(15px,3.6vmin,20px);line-height:1.7;letter-spacing:.06em;text-shadow:0 0 8px #000,0 1px 2px #000}';
       const card = document.createElement('div');
       card.id = 'ah-date-card';
       card.setAttribute('aria-live', 'polite');
       card.innerHTML = '<div class="row"><span class="a">1997年</span><span class="b">10月31日</span></div>';
+      // the voice's subtitles, only when the voice is actually playing
+      if (voiceLen) {
+        const tel = document.createElement('div'); tel.className = 'tel';
+        const brk = (t) => (AH2.subBreak ? AH2.subBreak(t) : t);
+        for (const [a, b, t] of LINES) {
+          const p = document.createElement('p'); p.textContent = brk(t);
+          p.style.animation = 'ahPhoneSubIn .3s ease ' + (VOICE_AT + a) + 's both, ahPhoneSubOut .4s ease ' + (VOICE_AT + Math.min(b, voiceLen + 0.3)) + 's forwards';
+          tel.appendChild(p);
+        }
+        card.appendChild(tel);
+      }
       // only the lettering fades out; the black cuts away the moment it has gone
       card.addEventListener('animationend', (e) => {
         if (e.animationName !== 'ahDateOut') return;
