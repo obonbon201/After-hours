@@ -30,15 +30,18 @@
   for (const [k, url] of Object.entries(FILES)) fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => { if (b) { bytes[k] = b; decode(); } }).catch(() => {});
   const previousMount = AH2.mount;
   AH2.mount = function (h) { const r = previousMount ? previousMount.apply(this, arguments) : undefined; host = h; decode(); const iv = setInterval(() => { decode(); if (buf.ring && buf.pickup) clearInterval(iv); }, 1000); return r; };
+  let live = [];                                      // the sources of the current call, so SKIP can hang up
   const play = (k, at, gain) => {
     const a = host && host.audio; if (!a || !a.ctx || !a.master || !buf[k]) return 0;
     if (a.ctx.state === 'suspended') a.ctx.resume().catch(() => {});
     const s = a.ctx.createBufferSource(), g = a.ctx.createGain(); g.gain.value = gain; s.buffer = buf[k]; s.connect(g).connect(a.master); s.start(a.ctx.currentTime + at);
+    live.push({ s, g });
     return buf[k].duration;
   };
 
   AH2.dateCard = function (done) {
     decode();
+    live = [];
     play('ring', RING_AT, 0.25); play('pickup', RING_END, 0.45);
     const voiceLen = play('voice', VOICE_AT, 1.0);
     // 3 s after "10月31日" is fully shown, or once the voice on the line has finished
@@ -60,7 +63,11 @@
         '#ah-date-card .tel{position:absolute;left:10%;right:10%;bottom:12%;text-align:center}' +
         '#ah-date-card .tel p{position:absolute;left:0;right:0;bottom:0;margin:0;opacity:0;white-space:pre-line;color:#f2efe8;' +
         'font-family:"Hiragino Mincho ProN","HiraMinProN-W6","HiraMinProN-W3","Yu Mincho","YuMincho","Noto Serif JP",serif;font-synthesis:none;' +
-        'font-size:clamp(15px,3.6vmin,20px);line-height:1.7;letter-spacing:.06em;text-shadow:0 0 8px #000,0 1px 2px #000}';
+        'font-size:clamp(15px,3.6vmin,20px);line-height:1.7;letter-spacing:.06em;text-shadow:0 0 8px #000,0 1px 2px #000}' +
+        // SKIP: same look and place as the opening tape's button
+        '#ah-date-card .skip{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(64px,calc(env(safe-area-inset-bottom) + 48px));' +
+        'min-width:96px;min-height:44px;padding:10px 16px;font:12px/1 monospace;letter-spacing:1.5px;color:#dce2cf;background:#0b0f0ecc;border:1px solid #9aa38c88;' +
+        'opacity:0;animation:ahDateIn .5s ease .6s both;-webkit-tap-highlight-color:transparent;touch-action:manipulation}';
       const card = document.createElement('div');
       card.id = 'ah-date-card';
       card.setAttribute('aria-live', 'polite');
@@ -81,6 +88,19 @@
         }
         card.appendChild(tel);
       }
+      // SKIP: hang up (the ring, pickup and voice stop at once) and go straight on to the memo
+      const skip = document.createElement('button');
+      skip.className = 'skip'; skip.type = 'button'; skip.textContent = 'SKIP ▶▶';
+      const hangUp = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (finished) return;
+        const a = host && host.audio, now = a && a.ctx ? a.ctx.currentTime : 0;
+        for (const { s, g } of live) { try { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 0.06); s.stop(now + 0.08); } catch (err) {} }
+        live = [];
+        clearInterval(clockIv); card.remove(); css.remove(); finish();
+      };
+      skip.addEventListener('click', hangUp);
+      card.appendChild(skip);
       // only the lettering fades out; the black cuts away the moment it has gone
       card.addEventListener('animationend', (e) => {
         if (e.animationName !== 'ahDateOut') return;
