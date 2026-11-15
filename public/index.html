@@ -8057,10 +8057,25 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
   };
 
   const PICKUPS = [
-    // id, position of the fuse, its turn on the surface
+    // id, position of the fuse, its turn on the surface (spot 0; the others are in SPOTS)
     { id: 'fuse-yard', x: 11.33, y: 0.535, z: 39.43, ry: 0.6 },     // on a crate, corner of the car park by the loading gate
     { id: 'fuse-bench', x: 3.3, y: 0.607, z: -26.48, ry: -0.25 },   // on the seat of the bench behind the carousel
   ];
+  // Three places for each fuse; a new night (before the ticket is taken) picks one of each at random.
+  // The choice is kept with the browser so a resumed night finds the fuses where they were.
+  const SPOTS = {
+    'fuse-yard': [                                                    // the service-yard car park
+      { x: 11.33, y: 0.535, z: 39.43, ry: 0.6 },                      // on the crate in the corner by the loading gate
+      { x: 14.15, y: 0.745, z: 31.76, ry: 1.9 },                      // on the stack of pallets just inside the yard gate
+      { x: 34.05, y: 0.075, z: 26.98, ry: 0.35 },                     // on the ground beside the dumpster, thrown away
+    ],
+    'fuse-bench': [                                                   // round the back of the carousel
+      { x: 3.3, y: 0.607, z: -26.48, ry: -0.25 },                     // on the seat of the bench behind the carousel
+      { x: 3.95, y: 0.855, z: -34.82, ry: 0.9 },                      // on the wooden box on the lawn behind it
+      { x: 1.6, y: 0.105, z: -20.3, ry: -0.7 },                       // on the paving at the back edge of the carousel
+    ],
+  };
+  const SPOT_KEY = 'after-hours-fuse-spots-v1';
   const BOX = { x: -15.45, y: 1.4, z: 19 };                          // maintenance room fuse box (west wall)
   const LEVER = { x: -15.74, y: 1.42, z: 17.98 };                    // distribution lever, just left of the box
   const NEED = 2;
@@ -8112,6 +8127,30 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       const target = world.target(p.id, 'ヒューズを拾う', p.x, p.y + 0.05, p.z);
       return { ...p, mesh, target };
     });
+
+    // where the fuses lie tonight
+    const readSpots = () => { try { const v = JSON.parse(localStorage.getItem(SPOT_KEY) || 'null'); if (v && typeof v === 'object') return v; } catch (e) {} return {}; };
+    let spots = readSpots();
+    const place = () => {
+      for (const p of pickups) {
+        const list = SPOTS[p.id], i = Number.isInteger(spots[p.id]) && list[spots[p.id]] ? spots[p.id] : 0, q = list[i];
+        p.spot = i; p.x = q.x; p.y = q.y; p.z = q.z;
+        lying(p.mesh, q.x, q.y, q.z, q.ry);
+        p.target.position.set(q.x, q.y + 0.05, q.z);
+      }
+    };
+    let rolled = false;
+    const roll = () => {   // a fresh night: new places (avoid repeating last night's pair exactly)
+      const last = spots, next = {};
+      for (let k = 0; k < 6; k++) {
+        for (const id of Object.keys(SPOTS)) next[id] = Math.floor(Math.random() * SPOTS[id].length);
+        if (Object.keys(SPOTS).some((id) => next[id] !== last[id])) break;
+      }
+      spots = next; rolled = true;
+      try { localStorage.setItem(SPOT_KEY, JSON.stringify(spots)); } catch (e) {}
+      place();
+    };
+    place();
 
     // ---------------------------------------------------------------- the fuse box: two fuses go in
     const oldFuse = fuseMeshes['fuse-a'];       // the cartridge that used to sit in the box (row 1.29)
@@ -8259,6 +8298,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       setTimeout(() => say('見つからないように進む。見つかったら角を曲がって視線を切り、ロッカーやゴミ箱に隠れる。', 7), 4200);
     };
     const sync = () => {
+      if (story.stage === 0 && !rolled) roll();
       // fuses from the old procedure mean nothing now
       if (story.stage === 1 && story.fuses && story.fuses.some((f) => /^fuse-[abc]$/.test(f))) story.fuses = story.fuses.filter((f) => !/^fuse-[abc]$/.test(f));
       for (const p of pickups) {
@@ -8375,7 +8415,7 @@ body.stage2-map-open #stage2-hud > :not(#stage2-map-button) { visibility: hidden
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-    world.powerRestore = { pickups, sync, interact, lever: arm };
+    world.powerRestore = { pickups, sync, interact, lever: arm, SPOTS, roll, place, setSpots: (v) => { spots = v; place(); } };
   }
 })();
 </script>
